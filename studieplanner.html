@@ -156,6 +156,11 @@ label.f input,label.f select{font-weight:400;color:var(--ink);font-size:.95rem}
 .plan{display:flex;flex-direction:column;gap:10px}
 .plan .pd{font:600 .76rem var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:4px}
 .plan .short{color:var(--bad);font-size:.88rem;margin:0}
+.swg{display:flex;flex-direction:column;gap:4px;padding-bottom:10px}
+.swweek{border-top:1px solid var(--line)}
+.swweek summary{cursor:pointer;padding:8px 0;list-style-position:inside}
+.focus{font-size:.82rem;color:var(--muted);margin:2px 0 0;overflow-wrap:anywhere}
+.focus b{color:var(--ink);font-weight:700}
 .day .dl .st{display:block;font:500 .7rem var(--f-mono);color:var(--ok);margin-top:4px;text-transform:none}
 
 /* agenda */
@@ -335,6 +340,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
         <button class="btn primary" type="submit">Toevoegen</button>
       </form>
     </div>
+    <div class="card" id="swCard" hidden>
+      <h3>Studiewijzers</h3>
+      <p class="small muted" style="margin:0 0 8px">Per week de opgaven uit je studiewijzer. Vink af wat je gemaakt hebt; wat open blijft na de week telt als achterstand in de check.</p>
+      <div id="swList"></div>
+    </div>
     <div class="card">
       <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Takenlijst <small class="muted mono" id="taskCount"></small></h3><div class="chips" id="taskFilter"></div></div>
       <div id="taskGroups"></div>
@@ -472,6 +482,18 @@ function plannedLeft(vakId, day){
   return evs.filter(e => e.study && !e.allDay && e.vak === vakId && ymd(e.start) === day && e.end > now).reduce((a, e) => a + Math.round((e.end - Math.max(e.start, now)) / 60000), 0);
 }
 
+/* studiewijzer: taken met source "sw:<id>" en een sw-veld {week, start, domein, bron, hfd, par, ord, se} */
+const isSw = t => String(t.source || "").startsWith("sw:");
+const swSort = (a, b) => (a.due || "9999").localeCompare(b.due || "9999") || (a.sw?.ord || 0) - (b.sw?.ord || 0);
+function swFocus(vakId, date){
+  const items = S.tasks.filter(t => isSw(t) && t.vak === vakId && !t.sw?.se).sort(swSort); if (!items.length) return null;
+  const d = ymd(date), nu = items.filter(t => !t.done).slice(0, 2);
+  const old = items.filter(t => !nu.includes(t) && (t.done || t.due < d) && t.sw?.par);
+  const her = old.length ? old[Math.floor(startOfDay(date).getTime() / 864e5) % old.length] : null;
+  const se = S.tasks.filter(t => isSw(t) && t.vak === vakId && t.sw?.se && !t.done && t.due >= d).sort(swSort)[0] || null;
+  return { nu, her, se };
+}
+
 /* ================= agenda (Google Calendar via mcp) ================= */
 const CAL = "Google Calendar";
 let mcp = null, mcpReady = false;
@@ -602,6 +624,14 @@ function computeCheck(){
   });
   return { open, overdue, soon, study, toetsChecks, today };
 }
+function focusLine(vakId){
+  const f = swFocus(vakId, new Date()); if (!f) return "";
+  const parts = [];
+  if (f.nu.length) parts.push(`<b>Nu:</b> ${f.nu.map(t => esc(t.title)).join(" · ")}`);
+  if (f.her) parts.push(`<b>Herhalen:</b> ${esc(f.her.sw.par)}`);
+  if (f.se) parts.push(`<b>${esc(f.se.title.split(" — ")[0])}</b> ${relDue(f.se.due)}`);
+  return parts.length ? `<p class="focus">${parts.join(" &nbsp;|&nbsp; ")}</p>` : "";
+}
 function weekDots(v){
   const ws = startOfWeek(new Date()), today = ymd(new Date());
   return `<span class="wdots v-${esc(v.color)}" title="Dagen deze week waarop je de norm haalde">${Array.from({ length: 7 }, (_, i) => { const k = ymd(addDays(ws, i)); return `<i class="${k > today ? "fut" : dayMet(v, k) ? "on" : ""}"></i>`; }).join("")}</span>`;
@@ -609,7 +639,12 @@ function weekDots(v){
 function renderVandaag(){
   const c = computeCheck();
   const issues = [];
-  c.overdue.forEach(t => issues.push({ lvl: "bad", text: `<b>${esc(t.title)}</b> · ${vakChip(t.vak)} · ${relDue(t.due)}`, act: `<button class="btn sm" data-done="${t.id}">Af</button>` }));
+  const swLate = {};
+  c.overdue.forEach(t => { if (isSw(t)) (swLate[t.source] ||= []).push(t); else issues.push({ lvl: "bad", text: `<b>${esc(t.title)}</b> · ${vakChip(t.vak)} · ${relDue(t.due)}`, act: `<button class="btn sm" data-done="${t.id}">Af</button>` }); });
+  Object.values(swLate).forEach(ts => {
+    if (ts.length <= 2) ts.forEach(t => issues.push({ lvl: "bad", text: `<b>${esc(t.title)}</b> · ${vakChip(t.vak)} studiewijzer · ${relDue(t.due)}`, act: `<button class="btn sm" data-done="${t.id}">Af</button>` }));
+    else { const wk = ts.map(t => t.sw?.week).filter(Boolean); issues.push({ lvl: "bad", text: `${vakChip(ts[0].vak)} studiewijzer: <b>${ts.length} opdrachten</b> uit week ${Math.min(...wk)}–${Math.max(...wk)} nog niet afgevinkt.`, act: `<button class="btn sm" data-gotab="taken">Bekijk</button>` }); }
+  });
   c.toetsChecks.forEach(({ e, task, blocks }) => {
     const when = fmtDay(e.start) + (e.allDay ? "" : " " + fmtTime(e.start));
     if (!task) issues.push({ lvl: "warn", text: `<b>${esc(e.title)}</b> (${when}) staat in je agenda maar niet in je takenlijst.`, act: `<button class="btn sm" data-mk="${esc(e.id)}">Maak taak</button>` });
@@ -637,7 +672,7 @@ function renderVandaag(){
   // studietijd vandaag
   const tot = c.study.reduce((a, s) => a + s.total, 0), dn = c.study.reduce((a, s) => a + s.done, 0);
   $("#studyStamp").textContent = `${fmtMin(dn)} van ${fmtMin(tot)}`;
-  $("#studyList").innerHTML = c.study.length ? c.study.map(s => `<div class="vday v-${esc(s.v.color)}"><div class="vh"><span>${vakChip(s.v.id)} ${weekDots(s.v)}</span><span class="tot ${s.met ? "done" : ""}">${s.done}/${s.total} min${s.met ? " ✓" : ""}</span></div><div class="bloks">${s.per.map(p => `<div class="blok ${p.done >= p.norm ? "ok" : ""}"><span class="bl">${p.b.kort} <b>${p.done}/${p.norm}</b></span><span class="bt"><i style="width:${p.norm ? Math.min(100, Math.round(p.done / p.norm * 100)) : 100}%"></i></span><button data-add15="${esc(s.v.id)}|${p.b.id}" aria-label="15 minuten ${esc(p.b.n)} ${esc(s.v.name)} bijschrijven">+15</button></div>`).join("")}</div></div>`).join("") : `<p class="empty">Geen vakken met een dagnorm. Stel die in bij Afvinken → Vakken.</p>`;
+  $("#studyList").innerHTML = c.study.length ? c.study.map(s => `<div class="vday v-${esc(s.v.color)}"><div class="vh"><span>${vakChip(s.v.id)} ${weekDots(s.v)}</span><span class="tot ${s.met ? "done" : ""}">${s.done}/${s.total} min${s.met ? " ✓" : ""}</span></div><div class="bloks">${s.per.map(p => `<div class="blok ${p.done >= p.norm ? "ok" : ""}"><span class="bl">${p.b.kort} <b>${p.done}/${p.norm}</b></span><span class="bt"><i style="width:${p.norm ? Math.min(100, Math.round(p.done / p.norm * 100)) : 100}%"></i></span><button data-add15="${esc(s.v.id)}|${p.b.id}" aria-label="15 minuten ${esc(p.b.n)} ${esc(s.v.name)} bijschrijven">+15</button></div>`).join("")}</div>${focusLine(s.v.id)}</div>`).join("") : `<p class="empty">Geen vakken met een dagnorm. Stel die in bij Afvinken → Vakken.</p>`;
   const tl = S.log.filter(l => l.min && logDay(l) === c.today);
   $("#todayLog").innerHTML = tl.length ? tl.map(l => `<li><span>${vakChip(l.vak)} ${esc(blokById(l.blok)?.kort || "")} · ${l.min} min · <span class="muted">${esc(l.what)}</span></span><button class="btn sm ghost" data-rmlog="${l.id}">Weghalen</button></li>`).join("") : `<li class="muted" style="background:none;padding:0">Nog niets gelogd vandaag.</li>`;
   renderTimer();
@@ -669,6 +704,7 @@ document.addEventListener("click", e => {
   else if (b.dataset.mk){ taskFromEvent(b.dataset.mk); b.disabled = true; b.textContent = "Toegevoegd"; }
   else if (b.dataset.add15){ const [vak, blok] = b.dataset.add15.split("|"); addLog(vak, "Handmatig bijgeschreven", { min: 15, blok }); }
   else if (b.dataset.rmlog){ removeLog(b.dataset.rmlog); }
+  else if (b.dataset.gotab){ setTab(b.dataset.gotab); }
   else if (b.dataset.tm){ setTab("vandaag"); startTimer(b.dataset.tm, b.dataset.blok || nextBlok(b.dataset.tm)); $("#timer").scrollIntoView({ block: "center" }); }
   else if (b.dataset.planday){ setTab("agenda"); $("#plRange").value = b.dataset.planday; makePlan(); $("#plOut").scrollIntoView({ block: "start" }); }
   else if (b.dataset.train){ const v = vakById(b.dataset.train); setTab("trainers"); if (v?.id === "eng") openEng(); else if (v?.link) window.open(v.link, "_blank", "noopener"); }
@@ -737,6 +773,15 @@ function blockEvent(day, bl){
   const titel = bl.segs.length === 1 ? `Studie: ${v.name} – ${blokById(bl.segs[0][0]).n}` : `Studie: ${v.name} (${bl.segs.map(([b, m]) => blokById(b).kort.toLowerCase() + " " + m).join(" · ")})`;
   let t = bl.start;
   const lines = bl.segs.map(([b, m]) => { const l = `${fmtTime(at(t))}–${fmtTime(at(t + m))} ${blokById(b).n}: ${blokById(b).tip}`; t += m; return l; });
+  const f = swFocus(bl.vak, day);
+  if (f){
+    const extra = [];
+    if (f.nu[0]?.sw?.par) extra.push(`Theorie: ${f.nu[0].sw.par} doornemen en de regels en formules uit je hoofd leren.`);
+    if (f.nu.length) extra.push(`Toepassen (studiewijzer): ${f.nu.map(t => t.title).join(" | ")}`);
+    if (f.her) extra.push(`Herhalen (oudere stof): ${f.her.title}`);
+    if (f.se) extra.push(`${f.se.title} — ${fmtDay(parseYmd(f.se.due))}`);
+    if (extra.length) lines.push("", ...extra);
+  }
   return { titel, start: localIso(at(bl.start)), eind: localIso(at(bl.end)), beschrijving: lines.join("\n") };
 }
 async function makePlan(){
@@ -769,7 +814,7 @@ $("#plGo").onclick = () => makePlan();
 let taskFilter = "alle";
 function taskRow(t){
   const late = !t.done && t.due && t.due < ymd(new Date()); const soon = !t.done && t.due && !late && dayDiff(new Date(), parseYmd(t.due)) <= 2;
-  return `<li class="task ${t.done ? "done" : ""}"><input type="checkbox" ${t.done ? "checked" : ""} data-tg="${t.id}" aria-label="${esc(t.title)} afvinken"><div><div class="tt">${esc(t.title)}</div><div class="tm">${vakChip(t.vak)}<span>${esc(t.kind || "")}</span>${t.due ? `<span class="${late ? "pill late" : soon ? "pill soon" : ""}">${t.done ? fmtDay(parseYmd(t.due)) : relDue(t.due)}</span>` : ""}${t.source?.startsWith("cal:") ? `<span>uit agenda</span>` : ""}</div></div><button class="x" data-rm="${t.id}" aria-label="Verwijder ${esc(t.title)}">×</button></li>`;
+  return `<li class="task ${t.done ? "done" : ""}"><input type="checkbox" ${t.done ? "checked" : ""} data-tg="${t.id}" aria-label="${esc(t.title)} afvinken"><div><div class="tt">${esc(t.title)}</div><div class="tm">${vakChip(t.vak)}<span>${esc(t.kind || "")}</span>${t.due ? `<span class="${late ? "pill late" : soon ? "pill soon" : ""}">${t.done ? fmtDay(parseYmd(t.due)) : relDue(t.due)}</span>` : ""}${t.source?.startsWith("cal:") ? `<span>uit agenda</span>` : ""}${t.sw?.hfd ? `<span>${esc(t.sw.bron || "")} · ${esc(t.sw.hfd)}${t.sw.domein ? " · domein " + esc(t.sw.domein) : ""}</span>` : ""}</div></div><button class="x" data-rm="${t.id}" aria-label="Verwijder ${esc(t.title)}">×</button></li>`;
 }
 document.addEventListener("change", e => { const t = e.target; if (t.dataset?.tg) toggleTask(t.dataset.tg, t.checked); });
 document.addEventListener("click", e => {
@@ -779,7 +824,7 @@ document.addEventListener("click", e => {
 });
 function renderTaken(){
   const today = ymd(new Date()), in7 = ymd(addDays(new Date(), 7));
-  const list = S.tasks.filter(t => taskFilter === "alle" || (t.vak || "") === taskFilter);
+  const list = S.tasks.filter(t => !isSw(t) && (taskFilter === "alle" || (t.vak || "") === taskFilter));
   const open = list.filter(t => !t.done).sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999") || (a.created || 0) - (b.created || 0));
   const groups = [
     ["Te laat", open.filter(t => t.due && t.due < today), "bad"],
@@ -788,12 +833,27 @@ function renderTaken(){
     ["Zonder deadline", open.filter(t => !t.due)],
     ["Klaar", list.filter(t => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 15)]
   ];
-  $("#taskCount").textContent = `${S.tasks.filter(t => t.done).length} van ${S.tasks.length} af`;
+  $("#taskCount").textContent = `${list.filter(t => t.done).length} van ${list.length} af`;
+  renderSw();
   $("#taskGroups").innerHTML = groups.filter(g => g[1].length).map(g => `<div class="grouph ${g[2] || ""}">${g[0]} · ${g[1].length}</div><ul class="tasks">${g[1].map(taskRow).join("")}</ul>`).join("") || `<p class="empty">Nog geen taken${taskFilter !== "alle" ? " voor dit vak" : ""}. Voeg er hierboven een toe, of laat Claude je toetsen uit je agenda overnemen.</p>`;
   const opts = [["alle", "Alle"], ...vakken().map(v => [v.id, v.name]), ["", "Algemeen"]];
   $("#taskFilter").innerHTML = opts.map(([id, n]) => `<button class="chip" data-tf="${esc(id)}" aria-pressed="${taskFilter === id}">${esc(n)}</button>`).join("");
   const late = S.tasks.filter(t => !t.done && t.due && t.due < today).length; const bdg = $("#lateBadge"); bdg.hidden = !late; bdg.textContent = late;
 }
+function renderSw(){
+  const groups = {}; S.tasks.filter(isSw).forEach(t => (groups[t.source] ||= []).push(t));
+  const keys = Object.keys(groups); $("#swCard").hidden = !keys.length; if (!keys.length) return;
+  const today = ymd(new Date()), ws = ymd(startOfWeek(new Date()));
+  $("#swList").innerHTML = keys.map(k => {
+    const items = groups[k].sort(swSort), v = vakById(items[0].vak), done = items.filter(t => t.done).length, pastOpen = items.filter(t => !t.done && t.due < ws).length;
+    const weeks = {}; items.forEach(t => (weeks[t.sw?.week ?? 0] ||= []).push(t));
+    return `<div class="swg"><div class="row">${vakChip(v?.id)}<span class="small muted mono">${done}/${items.length} af</span><span class="spacer"></span>${pastOpen ? `<button class="btn sm" data-swpast="${esc(k)}">Alles vóór deze week afvinken (${pastOpen})</button>` : ""}</div>${Object.entries(weeks).map(([w, ts]) => {
+      const st = ts[0].sw?.start, cur = st && st <= today && ymd(addDays(parseYmd(st), 6)) >= today, lateOpen = ts.some(t => !t.done && t.due < ws), past = ts.every(t => t.due < ws);
+      return `<details class="swweek" ${!past || lateOpen ? "open" : ""}><summary><b>Week ${esc(w)}</b>${st ? " · " + fmtDay(parseYmd(st)) : ""} <span class="small muted mono">${ts.filter(t => t.done).length}/${ts.length}</span>${cur ? ` <span class="pill soon">deze week</span>` : ""}${lateOpen ? ` <span class="pill late">achter</span>` : ""}</summary><ul class="tasks">${ts.map(taskRow).join("")}</ul></details>`;
+    }).join("")}</div>`;
+  }).join("");
+}
+$("#swList").addEventListener("click", e => { const b = e.target.closest("[data-swpast]"); if (!b) return; const ws = ymd(startOfWeek(new Date())); S.tasks.filter(t => t.source === b.dataset.swpast && !t.done && t.due < ws).forEach(t => toggleTask(t.id, true)); });
 $("#taskFilter").addEventListener("click", e => { const b = e.target.closest("[data-tf]"); if (!b) return; taskFilter = b.dataset.tf; renderTaken(); });
 $("#addForm").addEventListener("submit", e => { e.preventDefault(); const title = $("#afTitle").value.trim(); if (!title) return; addTask({ title, vak: $("#afVak").value, due: $("#afDue").value, kind: $("#afKind").value }); $("#afTitle").value = ""; $("#afDue").value = ""; $("#afTitle").focus(); });
 function fillVakSelects(){
@@ -885,7 +945,7 @@ function weekdayStr(){ const d = new Date(); return `${DAGEN_LANG[d.getDay()]} $
 function contextText(){
   const today = ymd(new Date());
   const v = vakken().map(x => `${x.name} (id ${x.id}, codes ${(x.codes || []).join("/") || "-"}, dagnorm ${BLOKKEN.map(b => `${b.kort.toLowerCase()} ${x.norm?.[b.id] || 0}`).join(" + ")} min, vandaag gedaan ${BLOKKEN.map(b => `${b.kort.toLowerCase()} ${minutesOn(x.id, today, b.id)}`).join(", ")} min, vandaag nog ingepland ${plannedLeft(x.id, today)} min)`).join("; ");
-  const open = S.tasks.filter(t => !t.done).slice(0, 40).map(t => `- [${t.id}] ${t.title} | vak ${vakById(t.vak)?.name || "algemeen"} | ${t.kind || ""} | deadline ${t.due || "geen"}`).join("\n");
+  const open = S.tasks.filter(t => !t.done).sort(swSort).slice(0, 40).map(t => `- [${t.id}] ${t.title} | vak ${vakById(t.vak)?.name || "algemeen"} | ${t.kind || ""} | deadline ${t.due || "geen"}`).join("\n");
   return `Vandaag is het ${weekdayStr()} (tijdzone Europe/Amsterdam). Thomas zit in 6 vwo en doet dit schooljaar eindexamen; het eerste CE is op ${S.settings.ceDate}.\nVakken: ${v}.\nOpen taken:\n${open || "(geen)"}`;
 }
 const RULES = () => `Je bent de studieplanner-assistent van Thomas. Antwoord in het Nederlands, kort en concreet, zonder opsmuk.
