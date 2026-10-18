@@ -133,6 +133,31 @@ label.f input,label.f select{font-weight:400;color:var(--ink);font-size:.95rem}
 .goal .gn{font:600 .82rem var(--f-mono);color:var(--muted)}
 .goal .gn.behind{color:var(--warn)} .goal .gn.done{color:var(--ok)}
 
+/* studietijd per dag */
+.study{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.timer{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-radius:9px;background:var(--sunk)}
+.timer select{flex:1;min-width:120px}
+.timer .clock{font:600 1.4rem var(--f-mono);font-variant-numeric:tabular-nums;min-width:4.5ch;text-align:right}
+.timer.run{background:var(--hl-soft)}
+.vday{display:flex;flex-direction:column;gap:6px}
+.vday .vh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.vday .tot{font:600 .82rem var(--f-mono);color:var(--muted)}
+.vday .tot.done{color:var(--ok)}
+.bloks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.blok{display:flex;flex-direction:column;gap:3px;min-width:0}
+.blok .bl{display:flex;justify-content:space-between;gap:4px;font-size:.74rem;color:var(--muted);white-space:nowrap;overflow:hidden}
+.blok .bl b{font:600 .74rem var(--f-mono);color:var(--ink)}
+.blok .bt{height:7px;border-radius:4px;background:var(--sunk);overflow:hidden}
+.blok .bt i{display:block;height:100%;background:var(--vc)}
+.blok.ok .bl b{color:var(--ok)}
+.blok button{border:1px dashed var(--line);background:none;border-radius:6px;font:600 .72rem var(--f-mono);color:var(--muted);padding:2px 0;cursor:pointer}
+.blok button:hover{border-color:var(--vc);color:var(--vc)}
+.wdots{display:inline-flex;gap:3px;vertical-align:middle} .wdots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--vc)} .wdots i.on{background:var(--vc)} .wdots i.fut{border-color:var(--line)}
+.plan{display:flex;flex-direction:column;gap:10px}
+.plan .pd{font:600 .76rem var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:4px}
+.plan .short{color:var(--bad);font-size:.88rem;margin:0}
+.day .dl .st{display:block;font:500 .7rem var(--f-mono);color:var(--ok);margin-top:4px;text-transform:none}
+
 /* agenda */
 .weekbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
 .weekbar strong{font:700 1.05rem var(--f-display)}
@@ -211,8 +236,8 @@ label.f input,label.f select{font-weight:400;color:var(--ink);font-size:.95rem}
 .model input{margin-top:4px;accent-color:var(--ok)}
 .res{font:600 .9rem var(--f-mono)}
 .res.ok{color:var(--ok)} .res.no{color:var(--bad)} .res.mid{color:var(--warn)}
-.vakrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.4fr) 80px minmax(0,1.6fr) auto;gap:8px;align-items:end;padding:8px 0;border-bottom:1px solid var(--line)}
-@media (max-width:640px){.vakrow{grid-template-columns:1fr 1fr}.vakrow .wide{grid-column:1/-1}}
+.vakrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.2fr) 70px 70px 70px minmax(0,1.4fr) auto;gap:8px;align-items:end;padding:8px 0;border-bottom:1px solid var(--line)}
+@media (max-width:640px){.vakrow{grid-template-columns:repeat(3,minmax(0,1fr))}.vakrow .wide,.vakrow>label:nth-child(-n+2){grid-column:1/-1}}
 footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:.84rem;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -236,7 +261,12 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
     <div class="verdict" id="verdict"><div class="dot">…</div><div><h2>Even kijken…</h2><p>Je taken, weekdoelen en agenda worden gecontroleerd.</p></div></div>
     <div class="grid2">
       <div class="card"><h3>Wat er nog open staat <small id="checkStamp"></small></h3><ul class="checks" id="checkList"></ul></div>
-      <div class="card"><h3>Weekdoelen <small id="weekLabel"></small></h3><div class="goals" id="goalList"></div><p class="small muted" style="margin:10px 0 0">Een trainersessie telt automatisch mee bij Engels. Bij Wiskunde B en Nederlands tik je na het oefenen op +1.</p></div>
+      <div class="card"><h3>Studietijd vandaag <small id="studyStamp"></small></h3>
+        <div class="timer" id="timer"><select id="tmVak" aria-label="Vak"></select><select id="tmBlok" aria-label="Blok"></select><span class="clock" id="tmClock">0:00</span><button class="btn primary sm" id="tmGo">Start</button></div>
+        <div class="study" id="studyList"></div>
+        <p class="small muted" style="margin:10px 0 0">Per vak per dag: 30 min theorie stampen, 1 uur praktisch toepassen, 30 min actief herhalen en oudere stof. Gebruik de timer, of tik +15 als je zonder timer hebt gewerkt. De Engels-trainer telt zijn tijd zelf mee.</p>
+        <details style="margin-top:10px"><summary class="small muted" style="cursor:pointer">Vandaag gelogd</summary><ul class="acts" id="todayLog" style="margin-top:8px"></ul></details>
+      </div>
       <div class="card"><h3>Vandaag in je agenda <small id="todayStamp"></small></h3><div id="todayEvents"><p class="empty">Agenda laden…</p></div></div>
       <div class="card"><h3>Eerstvolgende taken</h3><ul class="tasks" id="nextTasks"></ul></div>
     </div>
@@ -255,11 +285,18 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       <div id="calNotice" style="margin-top:10px"></div>
       <div class="days" id="weekDays" style="margin-top:8px"></div>
     </div>
+    <div class="card">
+      <h3>Studietijd automatisch inplannen</h3>
+      <p class="small muted" style="margin:0 0 10px" id="planIntro"></p>
+      <div class="row"><select id="plRange" aria-label="Periode"><option value="today">Rest van vandaag</option><option value="tomorrow">Morgen</option><option value="week">Rest van deze week</option><option value="7">Komende 7 dagen</option></select><button class="btn primary" id="plGo">Maak voorstel</button></div>
+      <div id="plOut" style="margin-top:12px"></div>
+    </div>
     <div class="grid2">
       <div class="card">
         <h3>Claude voor je agenda</h3>
         <div class="chips" id="chatChips" style="margin-bottom:10px">
-          <button class="chip" data-q="Plan voor deze week studieblokken voor mijn weekdoelen, rond mijn lessen en afspraken heen.">Plan mijn week</button>
+          <button class="chip" data-q="Kijk naar mijn week: waar zitten toetsen en deadlines, en welke vakken hebben extra herhaling nodig? Stel per dag voor waar ik mijn studietijd op richt.">Weekfocus</button>
+          <button class="chip" data-q="Plan morgen voor elk vak mijn 2 uur studietijd (30 min theorie stampen, 1 uur toepassen, 30 min herhalen), rond mijn lessen en afspraken heen. Zeg het eerlijk als het niet past.">Plan morgen 2u per vak</button>
           <button class="chip" data-q="Wat heb ik morgen, en wat moet ik vanavond nog doen?">Wat heb ik morgen?</button>
           <button class="chip" data-q="Zoek mijn eerstvolgende toets of deadline en plan daarvoor herhaalblokken in de dagen ervoor.">Plan voor mijn volgende toets</button>
           <button class="chip" data-q="Zet alle toetsen en deadlines uit mijn agenda van de komende 3 weken in mijn takenlijst.">Toetsen naar takenlijst</button>
@@ -274,6 +311,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
         <h3 style="margin-top:18px">Zelf een studieblok inplannen</h3>
         <form class="planform" id="planForm">
           <label class="f">Vak<select id="pfVak"></select></label>
+          <label class="f">Blok<select id="pfBlok"></select></label>
           <label class="f">Onderwerp<input type="text" id="pfWhat" placeholder="bijv. goniometrie"></label>
           <label class="f">Datum<input type="date" id="pfDate"></label>
           <label class="f">Begin<input type="time" id="pfStart" value="16:00"></label>
@@ -302,10 +340,11 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
       <div id="taskGroups"></div>
     </div>
     <div class="card">
-      <h3>Vakken en weekdoelen</h3>
-      <p class="small muted" style="margin:0 0 6px">Codes zijn de afkortingen in je rooster (zoals WB in ‘WB-5DV6D’). Daarmee herkent de planner lessen en toetsen in je agenda.</p>
+      <h3>Vakken en studietijd per dag</h3>
+      <p class="small muted" style="margin:0 0 6px">Codes zijn de afkortingen in je rooster (zoals WB in ‘WB-5DV6D’). Daarmee herkent de planner lessen en toetsen in je agenda. De minuten zijn je dagnorm per blok; zet alle drie op 0 als een vak niet mee moet tellen.</p>
       <div id="vakSettings"></div>
       <div class="row" style="margin-top:10px"><input type="text" id="newVak" placeholder="Vak toevoegen, bijv. Scheikunde"><button class="btn" id="addVak">Vak toevoegen</button></div>
+      <div class="row" style="margin-top:16px"><label class="f">Studeren op schooldagen vanaf<input type="time" id="wdFrom"></label><label class="f">tot<input type="time" id="wdTo"></label><label class="f">In het weekend vanaf<input type="time" id="weFrom"></label><label class="f">tot<input type="time" id="weTo"></label></div>
       <div class="row" style="margin-top:16px"><label class="f">Eerste CE-dag<input type="date" id="ceDate"></label><span class="small muted" style="align-self:end">Staat op een schatting. Zet hier de datum uit je examenrooster.</span></div>
     </div>
   </section>
@@ -355,17 +394,28 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 
 /* ================= vakken en opslag ================= */
 const DEFAULT_VAKKEN = [
-  {id:"wib", name:"Wiskunde B", codes:["WB","WISB","WISKUNDE B"], goal:3, color:"wib", link:"https://claude.ai/artifact/D2ba3PpuFfpGwpwQ5V6mMn", info:"Oefenen per domein, oude-examenopgaven, formules, uitleg en SE-voorbereiding."},
-  {id:"ned", name:"Nederlands", codes:["NE","NED","NEDERLANDS"], goal:2, color:"ned", link:"https://claude.ai/artifact/MYxez5KsHsf6U9C1D85t6W", info:"Literaire begrippen, leesvaardigheid CE en je documentatiemap over Bint."},
-  {id:"eng", name:"Engels", codes:["EN","ENG","ENGELS","ENGLISH"], goal:3, color:"eng", link:"", info:"Leesvaardigheid CE: vraagtypen, signaalwoorden, toon, oefenteksten en schrijfcheck."}
+  {id:"wib", name:"Wiskunde B", codes:["WB","WISB","WISKUNDE B"], color:"wib", link:"https://claude.ai/artifact/D2ba3PpuFfpGwpwQ5V6mMn", info:"Oefenen per domein, oude-examenopgaven, formules, uitleg en SE-voorbereiding."},
+  {id:"ned", name:"Nederlands", codes:["NE","NED","NEDERLANDS"], color:"ned", link:"https://claude.ai/artifact/MYxez5KsHsf6U9C1D85t6W", info:"Literaire begrippen, leesvaardigheid CE en je documentatiemap over Bint."},
+  {id:"eng", name:"Engels", codes:["EN","ENG","ENGELS","ENGLISH"], color:"eng", link:"", info:"Leesvaardigheid CE: vraagtypen, signaalwoorden, toon, oefenteksten en schrijfcheck."}
 ];
+const BLOKKEN = [
+  { id: "theorie", n: "Theorie stampen", kort: "Theorie", tip: "Begrippen, formules, regels en woorden uit je hoofd leren: flashcards, samenvatting, jezelf overhoren." },
+  { id: "toepassen", n: "Praktisch toepassen", kort: "Toepassen", tip: "Opgaven en oude-examenvragen maken, teksten lezen en analyseren, schrijven. Eerst zelf, dan pas nakijken." },
+  { id: "herhalen", n: "Actief herhalen + oude stof", kort: "Herhalen", tip: "Zonder boek ophalen wat je vandaag leerde, en een hoofdstuk van weken geleden opnieuw overhoren of oefenen." }
+];
+const blokById = id => BLOKKEN.find(b => b.id === id);
+const DEFAULT_NORM = { theorie: 30, toepassen: 60, herhalen: 30 };
+const DEFAULT_WINDOW = { wd: ["15:30", "22:00"], we: ["09:30", "22:00"] };
+DEFAULT_VAKKEN.forEach(v => { v.norm = { ...DEFAULT_NORM }; });
 const EXTRA_COLORS = ["c1","c2","c3","c4"];
-const S = { tasks: [], log: [], settings: { ceDate: "2027-05-11", vakken: DEFAULT_VAKKEN.map(v => ({...v})) } };
+const S = { tasks: [], log: [], settings: { ceDate: "2027-05-11", window: clone(DEFAULT_WINDOW), vakken: DEFAULT_VAKKEN.map(v => clone(v)) } };
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
 (function loadCache(){ const c = lsGet("sp-cache-v1", null); if (c){ S.tasks = c.tasks || []; S.log = c.log || []; if (c.settings) mergeSettings(c.settings); } })();
 function mergeSettings(d){
   if (d.ceDate) S.settings.ceDate = d.ceDate;
+  if (d.window && Array.isArray(d.window.wd) && Array.isArray(d.window.we)) S.settings.window = { wd: d.window.wd.slice(0, 2), we: d.window.we.slice(0, 2) };
   if (Array.isArray(d.vakken) && d.vakken.length){
-    S.settings.vakken = d.vakken.map(v => { const base = DEFAULT_VAKKEN.find(x => x.id === v.id); return {...(base || {}), ...v, info: base ? base.info : (v.info || "")}; });
+    S.settings.vakken = d.vakken.map(v => { const base = DEFAULT_VAKKEN.find(x => x.id === v.id); const out = {...(base ? clone(base) : {}), ...v, info: base ? base.info : (v.info || "")}; out.norm = { ...DEFAULT_NORM, ...(v.norm || {}) }; delete out.goal; return out; });
   }
 }
 const cache = () => lsSet("sp-cache-v1", { tasks: S.tasks, log: S.log, settings: S.settings });
@@ -402,10 +452,25 @@ function addTask({ title, vak = "", due = "", kind = "Huiswerk", source = "" }){
 }
 function toggleTask(id, done){ const t = S.tasks.find(x => x.id === id); if (!t) return; saveTask({ ...t, done, doneAt: done ? Date.now() : 0 }); }
 async function removeTask(id){ S.tasks = S.tasks.filter(t => t.id !== id); cache(); renderAll(); if (db){ try { await db.doc("planner/main/tasks/" + id).delete(); } catch (e) {} } }
-function addLog(vak, what){ const l = { id: uid(), vak, what: String(what).slice(0, 200), at: Date.now(), kind: "sessie" }; if (!db) l._local = true; S.log.unshift(l); cache(); renderAll(); writeLog(l); }
+/* log: één regel per stuk studietijd, met vak, blok en minuten */
+function addLog(vak, what, { min = 0, blok = "", day = "" } = {}){
+  const l = { id: uid(), vak, what: String(what).slice(0, 200), at: Date.now(), kind: "sessie", min: Math.max(0, Math.round(min)), blok, day: day || ymd(new Date()) };
+  if (!db) l._local = true; S.log.unshift(l); cache(); renderAll(); writeLog(l);
+}
+async function removeLog(id){ S.log = S.log.filter(l => l.id !== id); cache(); renderAll(); if (db){ try { await db.doc("planner/main/log/" + id).delete(); } catch (e) {} } }
 let settingsTimer = null;
-function saveSettings(){ cache(); renderAll(); clearTimeout(settingsTimer); settingsTimer = setTimeout(async () => { if (!db) return; try { await db.doc("planner/settings").set(clean({ ceDate: S.settings.ceDate, vakken: S.settings.vakken.map(({ info, ...v }) => v) })); } catch (e) { setSave("instellingen opslaan mislukt"); } }, 700); }
-function sessionsThisWeek(vak){ const w0 = startOfWeek(new Date()).getTime(); return S.log.filter(l => l.vak === vak && l.kind === "sessie" && l.at >= w0).length; }
+function saveSettings(){ cache(); renderAll(); clearTimeout(settingsTimer); settingsTimer = setTimeout(async () => { if (!db) return; try { await db.doc("planner/settings").set(clean({ ceDate: S.settings.ceDate, window: S.settings.window, vakken: S.settings.vakken.map(({ info, ...v }) => v) })); } catch (e) { setSave("instellingen opslaan mislukt"); } }, 700); }
+const logDay = l => l.day || ymd(new Date(l.at));
+function minutesOn(vak, day, blok){ return S.log.filter(l => l.vak === vak && l.min && logDay(l) === day && (!blok || l.blok === blok)).reduce((a, l) => a + l.min, 0); }
+const normTotal = v => BLOKKEN.reduce((a, b) => a + (v.norm?.[b.id] || 0), 0);
+const studyVakken = () => vakken().filter(v => normTotal(v) > 0);
+function dayMet(v, day){ return BLOKKEN.every(b => minutesOn(v.id, day, b.id) >= (v.norm?.[b.id] || 0)); }
+const fmtMin = m => m >= 60 ? Math.floor(m / 60) + "u" + (m % 60 ? pad(m % 60) : "") : m + " min";
+// minuten studie die vandaag nog in de agenda staan (alleen het deel na nu), per vak
+function plannedLeft(vakId, day){
+  const evs = calState.upcoming; if (!evs) return 0; const now = new Date();
+  return evs.filter(e => e.study && !e.allDay && e.vak === vakId && ymd(e.start) === day && e.end > now).reduce((a, e) => a + Math.round((e.end - Math.max(e.start, now)) / 60000), 0);
+}
 
 /* ================= agenda (Google Calendar via mcp) ================= */
 const CAL = "Google Calendar";
@@ -472,11 +537,11 @@ async function loadWeek(refresh){
 }
 async function afterCalWrite(){ try { await mcp.invalidate(CAL, "list_events"); } catch (e) {} loadUpcoming(true); loadWeek(true); }
 const toCal = s => { s = String(s); return s.length === 16 ? s + ":00" : s; };
-async function createEvent({ titel, start, eind, beschrijving }){
+async function createEvent({ titel, start, eind, beschrijving }, opts = {}){
   const r = await mcp.callTool(CAL, "create_event", { summary: String(titel), startTime: toCal(start), endTime: toCal(eind), description: (beschrijving ? beschrijving + "\n\n" : "") + "Gepland via Studieplanner" });
   const p = r.payload || {}; const id = p.id || p.event?.id || "";
   pushAct({ kind: "create", id, text: `Ingepland: ${titel} · ${fmtDay(new Date(toCal(start)))} ${String(start).slice(11, 16)}` });
-  afterCalWrite(); return { id, ok: true };
+  if (!opts.quiet) afterCalWrite(); return { id, ok: true };
 }
 async function updateEvent({ id, titel, start, eind }){
   const input = { eventId: String(id) }; if (titel) input.summary = String(titel); if (start) input.startTime = toCal(start); if (eind) input.endTime = toCal(eind);
@@ -522,8 +587,11 @@ function computeCheck(){
   const byDue = (a, b) => (a.due || "9999").localeCompare(b.due || "9999");
   const overdue = open.filter(t => t.due && t.due < today).sort(byDue);
   const soon = open.filter(t => t.due && t.due >= today && t.due <= in7).sort(byDue);
-  const di = (new Date().getDay() + 6) % 7;
-  const goals = vakken().filter(v => v.goal > 0).map(v => { const n = sessionsThisWeek(v.id); const expected = Math.floor(v.goal * (di + 1) / 7); return { v, n, done: n >= v.goal, behind: n < expected }; });
+  const study = studyVakken().map(v => {
+    const per = BLOKKEN.map(b => ({ b, done: minutesOn(v.id, today, b.id), norm: v.norm[b.id] || 0 }));
+    const done = per.reduce((a, p) => a + Math.min(p.done, p.norm), 0), total = normTotal(v), left = Math.max(0, total - done);
+    return { v, per, done, total, left, planned: plannedLeft(v.id, today), met: dayMet(v, today) };
+  });
   const ev = calState.upcoming; const now = new Date();
   const toetsen = ev ? ev.filter(e => e.toets && e.start >= startOfDay(now)) : [];
   const toetsChecks = toetsen.map(e => {
@@ -532,7 +600,11 @@ function computeCheck(){
     const blocks = ev.filter(x => x.study && x.start < e.start && x.end > now && (!x.vak || !e.vak || x.vak === e.vak)).length;
     return { e, task, blocks };
   });
-  return { open, overdue, soon, goals, toetsChecks, today };
+  return { open, overdue, soon, study, toetsChecks, today };
+}
+function weekDots(v){
+  const ws = startOfWeek(new Date()), today = ymd(new Date());
+  return `<span class="wdots v-${esc(v.color)}" title="Dagen deze week waarop je de norm haalde">${Array.from({ length: 7 }, (_, i) => { const k = ymd(addDays(ws, i)); return `<i class="${k > today ? "fut" : dayMet(v, k) ? "on" : ""}"></i>`; }).join("")}</span>`;
 }
 function renderVandaag(){
   const c = computeCheck();
@@ -544,21 +616,31 @@ function renderVandaag(){
     if (!blocks && !(task && task.done)) issues.push({ lvl: "warn", text: `Nog geen studieblok gepland vóór <b>${esc(e.title)}</b> (${when}).`, act: `<button class="btn sm" data-plan="${esc(e.id)}">Plan met Claude</button>` });
     else if (task && blocks) issues.push({ lvl: "ok", text: `${esc(e.title)} (${when}): taak staat erin, ${blocks} studieblok${blocks > 1 ? "ken" : ""} gepland.` });
   });
-  c.goals.filter(g => g.behind).forEach(g => issues.push({ lvl: "warn", text: `${vakChip(g.v.id)} loopt achter op je weekdoel: ${g.n} van ${g.v.goal} sessies.`, act: `<button class="btn sm" data-train="${g.v.id}">Oefen nu</button>` }));
+  c.study.forEach(s => {
+    const rest = s.per.filter(p => p.done < p.norm).map(p => `${p.b.kort.toLowerCase()} ${p.norm - p.done}`).join(", ");
+    if (s.met) issues.push({ lvl: "ok", text: `${vakChip(s.v.id)} ${fmtMin(s.total)} studietijd gehaald vandaag.` });
+    else if (calState.upcoming && s.planned >= s.left) issues.push({ lvl: "info", text: `${vakChip(s.v.id)} nog ${fmtMin(s.left)} te gaan (${rest} min), staat vandaag in je agenda.`, act: `<button class="btn sm" data-tm="${s.v.id}">Start timer</button>` });
+    else issues.push({ lvl: "warn", text: `${vakChip(s.v.id)} nog ${fmtMin(s.left)} te gaan (${rest} min)${calState.upcoming ? (s.planned ? `, waarvan maar ${fmtMin(s.planned)} ingepland` : ", nog niet ingepland") : ""}.`, act: calState.upcoming ? `<button class="btn sm" data-planday="today">Plan vandaag</button>` : `<button class="btn sm" data-tm="${s.v.id}">Start timer</button>` });
+  });
   c.soon.forEach(t => issues.push({ lvl: "info", text: `<b>${esc(t.title)}</b> · ${vakChip(t.vak)} · ${relDue(t.due)}`, act: `<button class="btn sm" data-done="${t.id}">Af</button>` }));
   const bad = c.overdue.length, warn = issues.filter(i => i.lvl === "warn").length;
+  const left = c.study.reduce((a, s) => a + s.left, 0), allMet = c.study.every(s => s.met);
   const v = $("#verdict");
   const calTxt = calState.upcoming ? "" : calState.upErr ? " De agenda kon niet worden meegenomen." : " De agenda wordt nog geladen.";
-  if (bad){ v.className = "verdict bad"; v.innerHTML = `<div class="dot">${bad}</div><div><h2>Je hebt ${bad} ${bad === 1 ? "taak" : "taken"} te laat</h2><p>Werk die eerst weg.${warn ? " Daarnaast nog " + warn + " aandachtspunt" + (warn > 1 ? "en" : "") + "." : ""}${calTxt}</p></div>`; }
-  else if (warn){ v.className = "verdict warn"; v.innerHTML = `<div class="dot">${warn}</div><div><h2>Bijna alles op schema</h2><p>Niets te laat, wel ${warn} punt${warn > 1 ? "en" : ""} om te regelen.${calTxt}</p></div>`; }
-  else { v.className = "verdict ok"; v.innerHTML = `<div class="dot">✓</div><div><h2>Je hebt alles af wat nu af moet</h2><p>Geen taken te laat en je weekdoelen lopen op schema.${calTxt}</p></div>`; }
+  const studyTxt = left ? ` Vandaag nog ${fmtMin(left)} studietijd te gaan.` : "";
+  if (bad){ v.className = "verdict bad"; v.innerHTML = `<div class="dot">${bad}</div><div><h2>Je hebt ${bad} ${bad === 1 ? "taak" : "taken"} te laat</h2><p>Werk die eerst weg.${studyTxt}${calTxt}</p></div>`; }
+  else if (!allMet || warn){ v.className = "verdict warn"; v.innerHTML = `<div class="dot">${left ? Math.ceil(left / 60) + "u" : warn}</div><div><h2>${left ? "Nog niet klaar voor vandaag" : "Bijna alles op schema"}</h2><p>Niets te laat.${studyTxt}${warn ? " " + warn + " punt" + (warn > 1 ? "en" : "") + " om te regelen." : ""}${calTxt}</p></div>`; }
+  else { v.className = "verdict ok"; v.innerHTML = `<div class="dot">✓</div><div><h2>Je hebt alles af voor vandaag</h2><p>Geen taken te laat en je studietijd voor elk vak zit erop.${calTxt}</p></div>`; }
   const ICON = { bad: "!", warn: "•", ok: "✓", info: "→" };
   $("#checkList").innerHTML = issues.length ? issues.map(i => `<li class="${i.lvl}"><span class="ic">${ICON[i.lvl]}</span><span>${i.text}</span>${i.act || "<span></span>"}</li>`).join("") : `<li class="ok"><span class="ic">✓</span><span>Niets open voor de komende week. Kijk bij Trainers wat je kunt oefenen.</span><span></span></li>`;
   $("#checkStamp").textContent = c.open.length + " open";
-  // weekdoelen
-  const ws = startOfWeek(new Date());
-  $("#weekLabel").textContent = "week " + isoWeek(new Date()) + " · " + ws.getDate() + " " + MAANDEN[ws.getMonth()] + " – " + addDays(ws, 6).getDate() + " " + MAANDEN[addDays(ws, 6).getMonth()];
-  $("#goalList").innerHTML = c.goals.length ? c.goals.map(g => `<div class="goal v-${esc(g.v.color)}"><span>${vakChip(g.v.id)}</span><span class="row"><span class="gn ${g.done ? "done" : g.behind ? "behind" : ""}">${g.n}/${g.v.goal}${g.done ? " ✓" : ""}</span><button class="btn sm" data-plus="${g.v.id}" aria-label="Sessie ${esc(g.v.name)} toevoegen">+1</button></span><div class="bar">${Array.from({ length: Math.max(g.v.goal, g.n) }, (_, i) => `<i class="${i < g.n ? "on" : ""}"></i>`).join("")}</div></div>`).join("") : `<p class="empty">Geen weekdoelen ingesteld. Zet ze bij Afvinken → Vakken.</p>`;
+  // studietijd vandaag
+  const tot = c.study.reduce((a, s) => a + s.total, 0), dn = c.study.reduce((a, s) => a + s.done, 0);
+  $("#studyStamp").textContent = `${fmtMin(dn)} van ${fmtMin(tot)}`;
+  $("#studyList").innerHTML = c.study.length ? c.study.map(s => `<div class="vday v-${esc(s.v.color)}"><div class="vh"><span>${vakChip(s.v.id)} ${weekDots(s.v)}</span><span class="tot ${s.met ? "done" : ""}">${s.done}/${s.total} min${s.met ? " ✓" : ""}</span></div><div class="bloks">${s.per.map(p => `<div class="blok ${p.done >= p.norm ? "ok" : ""}"><span class="bl">${p.b.kort} <b>${p.done}/${p.norm}</b></span><span class="bt"><i style="width:${p.norm ? Math.min(100, Math.round(p.done / p.norm * 100)) : 100}%"></i></span><button data-add15="${esc(s.v.id)}|${p.b.id}" aria-label="15 minuten ${esc(p.b.n)} ${esc(s.v.name)} bijschrijven">+15</button></div>`).join("")}</div></div>`).join("") : `<p class="empty">Geen vakken met een dagnorm. Stel die in bij Afvinken → Vakken.</p>`;
+  const tl = S.log.filter(l => l.min && logDay(l) === c.today);
+  $("#todayLog").innerHTML = tl.length ? tl.map(l => `<li><span>${vakChip(l.vak)} ${esc(blokById(l.blok)?.kort || "")} · ${l.min} min · <span class="muted">${esc(l.what)}</span></span><button class="btn sm ghost" data-rmlog="${l.id}">Weghalen</button></li>`).join("") : `<li class="muted" style="background:none;padding:0">Nog niets gelogd vandaag.</li>`;
+  renderTimer();
   // vandaag
   const te = $("#todayEvents");
   if (calState.upcoming){
@@ -585,10 +667,103 @@ document.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.dataset.done){ toggleTask(b.dataset.done, true); }
   else if (b.dataset.mk){ taskFromEvent(b.dataset.mk); b.disabled = true; b.textContent = "Toegevoegd"; }
-  else if (b.dataset.plus){ addLog(b.dataset.plus, "Sessie (handmatig)"); }
+  else if (b.dataset.add15){ const [vak, blok] = b.dataset.add15.split("|"); addLog(vak, "Handmatig bijgeschreven", { min: 15, blok }); }
+  else if (b.dataset.rmlog){ removeLog(b.dataset.rmlog); }
+  else if (b.dataset.tm){ setTab("vandaag"); startTimer(b.dataset.tm, b.dataset.blok || nextBlok(b.dataset.tm)); $("#timer").scrollIntoView({ block: "center" }); }
+  else if (b.dataset.planday){ setTab("agenda"); $("#plRange").value = b.dataset.planday; makePlan(); $("#plOut").scrollIntoView({ block: "start" }); }
   else if (b.dataset.train){ const v = vakById(b.dataset.train); setTab("trainers"); if (v?.id === "eng") openEng(); else if (v?.link) window.open(v.link, "_blank", "noopener"); }
   else if (b.dataset.plan){ const ev = findEvent(b.dataset.plan); if (!ev) return; setTab("agenda"); sendChat(`Plan herhaalblokken voor "${ev.title}" op ${fmtDay(ev.start)}. Kijk eerst in mijn agenda wanneer ik vrij ben in de dagen ervoor, en zet daarna ook een taak voor deze toets in mijn takenlijst.`); }
 });
+
+/* ================= timer ================= */
+let tmTick = null;
+const getTimer = () => lsGet("sp-timer", null);
+function nextBlok(vakId){ const v = vakById(vakId), d = ymd(new Date()); const b = BLOKKEN.find(x => minutesOn(vakId, d, x.id) < (v?.norm?.[x.id] || 0)); return (b || BLOKKEN[1]).id; }
+function startTimer(vak, blok){ if (getTimer()) stopTimer(); lsSet("sp-timer", { vak, blok, start: Date.now() }); renderTimer(); }
+function stopTimer(){
+  const t = getTimer(); if (!t) return; lsSet("sp-timer", null);
+  const min = Math.round((Date.now() - t.start) / 60000);
+  if (min >= 1) addLog(t.vak, "Timer", { min: Math.min(min, 240), blok: t.blok, day: ymd(new Date(t.start)) }); else renderTimer();
+}
+function renderTimer(){
+  const vs = $("#tmVak"), bs = $("#tmBlok"), t = getTimer();
+  const vopts = vakken().map(v => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join("");
+  if (vs.dataset.sig !== vopts){ const cur = vs.value; vs.innerHTML = vopts; vs.dataset.sig = vopts; if (cur && vakById(cur)) vs.value = cur; }
+  if (!bs.options.length){ bs.innerHTML = BLOKKEN.map(b => `<option value="${b.id}">${b.n}</option>`).join(""); bs.value = nextBlok(vs.value); }
+  $("#timer").classList.toggle("run", !!t); vs.disabled = bs.disabled = !!t;
+  if (t){ vs.value = t.vak; bs.value = t.blok; $("#tmGo").textContent = "Stop en log"; } else $("#tmGo").textContent = "Start";
+  clearInterval(tmTick);
+  const draw = () => { const s = t ? Math.floor((Date.now() - t.start) / 1000) : 0; $("#tmClock").textContent = Math.floor(s / 60) + ":" + pad(s % 60); };
+  draw(); if (t) tmTick = setInterval(draw, 1000);
+}
+$("#tmGo").onclick = () => { if (getTimer()) stopTimer(); else startTimer($("#tmVak").value, $("#tmBlok").value); };
+$("#tmVak").onchange = () => { $("#tmBlok").value = nextBlok($("#tmVak").value); };
+
+/* ================= studietijd inplannen ================= */
+const hm = s => { const [h, m] = String(s || "0:0").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+function windowFor(d){ const w = S.settings.window || DEFAULT_WINDOW; const weekend = d.getDay() === 0 || d.getDay() === 6; return (weekend ? w.we : w.wd).map(hm); }
+// Zoekt vrije stukken in het studievenster en plant per vak wat nog openstaat: eerst als één aaneengesloten blok, anders per onderdeel.
+function planDay(day, events){
+  const now = new Date(), k = ymd(day), isToday = k === ymd(now), dayEnd = addDays(day, 1);
+  let [ws, we] = windowFor(day);
+  if (isToday) ws = Math.max(ws, Math.ceil((now.getHours() * 60 + now.getMinutes() + 5) / 15) * 15);
+  const dayEv = events.filter(e => !e.allDay && e.start < dayEnd && e.end > day);
+  const toMin = d => Math.round((d - day) / 60000);
+  const busy = dayEv.map(e => [Math.max(0, toMin(e.start)), Math.min(1440, toMin(e.end))]).sort((a, b) => a[0] - b[0]);
+  let gaps = [], cur = ws;
+  for (const [s, e] of busy){ if (cur >= we) break; if (e <= cur) continue; if (s > cur) gaps.push([cur, Math.min(s, we)]); cur = Math.max(cur, e); }
+  if (cur < we) gaps.push([cur, we]);
+  gaps = gaps.filter(g => g[1] - g[0] >= 15);
+  const blocks = [], short = [];
+  for (const v of studyVakken()){
+    let planned = Math.max(0, dayEv.filter(e => e.study && e.vak === v.id).reduce((a, e) => a + Math.round((Math.min(e.end, dayEnd) - Math.max(e.start, isToday ? now : day)) / 60000), 0));
+    const need = BLOKKEN.map(b => [b.id, Math.max(0, (v.norm[b.id] || 0) - (isToday ? minutesOn(v.id, k, b.id) : 0))])
+      .map(([b, m]) => { const take = Math.min(m, planned); planned -= take; return [b, m - take]; }).filter(([, m]) => m > 0);
+    if (!need.length) continue;
+    const total = need.reduce((a, [, m]) => a + m, 0);
+    const gi = gaps.findIndex(g => g[1] - g[0] >= total);
+    if (gi >= 0){ const s = gaps[gi][0]; blocks.push({ vak: v.id, segs: need, start: s, end: s + total }); gaps[gi][0] = s + total + 10; }
+    else for (const [b, m] of need){
+      const gj = gaps.findIndex(g => g[1] - g[0] >= m);
+      if (gj < 0){ short.push({ vak: v.id, blok: b, min: m }); continue; }
+      const s = gaps[gj][0]; blocks.push({ vak: v.id, segs: [[b, m]], start: s, end: s + m }); gaps[gj][0] = s + m + 5;
+    }
+    gaps = gaps.filter(g => g[1] - g[0] >= 15);
+  }
+  return { day, blocks: blocks.sort((a, b) => a.start - b.start), short };
+}
+function blockEvent(day, bl){
+  const v = vakById(bl.vak), at = m => { const d = new Date(day); d.setMinutes(m); return d; };
+  const titel = bl.segs.length === 1 ? `Studie: ${v.name} – ${blokById(bl.segs[0][0]).n}` : `Studie: ${v.name} (${bl.segs.map(([b, m]) => blokById(b).kort.toLowerCase() + " " + m).join(" · ")})`;
+  let t = bl.start;
+  const lines = bl.segs.map(([b, m]) => { const l = `${fmtTime(at(t))}–${fmtTime(at(t + m))} ${blokById(b).n}: ${blokById(b).tip}`; t += m; return l; });
+  return { titel, start: localIso(at(bl.start)), eind: localIso(at(bl.end)), beschrijving: lines.join("\n") };
+}
+async function makePlan(){
+  const out = $("#plOut");
+  if (!mcp){ out.innerHTML = `<div class="notice bad">${esc(calErrCopy({ code: "not_granted" }))}</div>`; return; }
+  const r = $("#plRange").value, t0 = startOfDay(new Date());
+  const days = r === "today" ? [t0] : r === "tomorrow" ? [addDays(t0, 1)] : Array.from({ length: r === "week" ? 7 - ((t0.getDay() + 6) % 7) : 7 }, (_, i) => addDays(t0, i));
+  out.innerHTML = `<p class="empty">Agenda bekijken en vrije tijd zoeken…</p>`;
+  let evs;
+  try { evs = await fetchEvents(days[0], addDays(days[days.length - 1], 1), { refresh: true }); }
+  catch (e) { out.innerHTML = `<div class="notice bad">${esc(calErrCopy(e))}</div>`; return; }
+  const plans = days.map(d => planDay(d, evs));
+  const n = plans.reduce((a, p) => a + p.blocks.length, 0), shortMin = plans.reduce((a, p) => a + p.short.reduce((x, s) => x + s.min, 0), 0);
+  out.innerHTML = `<div class="plan">${plans.map(p => `<div class="pd">${DAGEN_LANG[p.day.getDay()]} ${p.day.getDate()} ${MAANDEN[p.day.getMonth()]}</div>${p.blocks.length ? `<ul class="acts">${p.blocks.map(bl => { const e = blockEvent(p.day, bl); return `<li class="v-${esc(vakById(bl.vak).color)}" style="border-left:4px solid var(--vc)"><span><b class="mono">${e.start.slice(11, 16)}–${e.eind.slice(11, 16)}</b> ${esc(e.titel.replace(/^Studie: /, ""))}</span></li>`; }).join("")}</ul>` : (p.short.length ? "" : `<p class="small muted" style="margin:0">Alles voor deze dag staat al in je agenda of is al gedaan.</p>`)}${p.short.length ? `<p class="short">Past niet: ${p.short.map(s => `${esc(vakById(s.vak).name)} ${esc(blokById(s.blok).kort.toLowerCase())} ${s.min} min`).join(", ")}. Maak ruimte in je agenda of verruim je studietijden bij Afvinken.</p>` : ""}`).join("")}
+    <div class="row" style="margin-top:6px"><button class="btn hl" id="plDo" ${n ? "" : "disabled"}>Zet ${n} ${n === 1 ? "afspraak" : "afspraken"} in je agenda</button>${shortMin ? `<span class="small" style="color:var(--bad)">${fmtMin(shortMin)} past niet</span>` : ""}</div><p class="small muted" id="plMsg" style="margin:0"></p></div>`;
+  const btn = $("#plDo"); if (btn) btn.onclick = () => commitPlan(plans);
+}
+async function commitPlan(plans){
+  const btn = $("#plDo"), msg = $("#plMsg"); btn.disabled = true;
+  const all = plans.flatMap(p => p.blocks.map(bl => blockEvent(p.day, bl)));
+  let ok = 0, fail = null;
+  for (const e of all){ msg.textContent = `Inplannen ${ok + 1} van ${all.length}…`; try { await createEvent(e, { quiet: true }); ok++; } catch (err) { fail = err; break; } }
+  msg.textContent = fail ? `${ok} van ${all.length} ingepland, daarna ging het mis: ${calErrCopy(fail)}` : `Klaar: ${ok} studieblok${ok === 1 ? "" : "ken"} staan in je agenda. Terugdraaien kan per blok onder ‘Wat Claude in je agenda deed’.`;
+  if (fail){ btn.disabled = false; btn.textContent = "Nieuw voorstel maken"; btn.onclick = () => makePlan(); } else btn.textContent = "Ingepland";
+  afterCalWrite();
+}
+$("#plGo").onclick = () => makePlan();
 
 /* ================= taken ================= */
 let taskFilter = "alle";
@@ -622,28 +797,36 @@ function renderTaken(){
 $("#taskFilter").addEventListener("click", e => { const b = e.target.closest("[data-tf]"); if (!b) return; taskFilter = b.dataset.tf; renderTaken(); });
 $("#addForm").addEventListener("submit", e => { e.preventDefault(); const title = $("#afTitle").value.trim(); if (!title) return; addTask({ title, vak: $("#afVak").value, due: $("#afDue").value, kind: $("#afKind").value }); $("#afTitle").value = ""; $("#afDue").value = ""; $("#afTitle").focus(); });
 function fillVakSelects(){
+  const pb = $("#pfBlok"); if (!pb.options.length) pb.innerHTML = BLOKKEN.map(b => `<option value="${b.id}">${b.n}</option>`).join("");
   const opts = vakken().map(v => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join("");
   [["#afVak", true], ["#pfVak", false], ["#qcVak", false]].forEach(([s, alg]) => { const el = $(s); const cur = el.value; el.innerHTML = opts + (alg ? `<option value="">Algemeen</option>` : ""); if ([...el.options].some(o => o.value === cur)) el.value = cur; });
 }
 function renderSettings(){
   $("#ceDate").value = S.settings.ceDate;
-  $("#vakSettings").innerHTML = vakken().map(v => `<div class="vakrow" data-vid="${esc(v.id)}"><label class="f">Vak<input type="text" data-k="name" value="${esc(v.name)}"></label><label class="f">Codes in rooster<input type="text" data-k="codes" value="${esc((v.codes || []).join(", "))}"></label><label class="f">Sessies/week<input type="number" min="0" max="14" data-k="goal" value="${v.goal}"></label><label class="f wide">Link naar trainer${v.id === "eng" ? " (ingebouwd)" : ""}<input type="text" data-k="link" value="${esc(v.link || "")}" ${v.id === "eng" ? "disabled" : ""} placeholder="https://claude.ai/artifact/…"></label>${DEFAULT_VAKKEN.some(d => d.id === v.id) ? "<span></span>" : `<button class="btn sm danger" data-rmvak="${esc(v.id)}">Verwijder</button>`}</div>`).join("");
+  const w = S.settings.window || DEFAULT_WINDOW; $("#wdFrom").value = w.wd[0]; $("#wdTo").value = w.wd[1]; $("#weFrom").value = w.we[0]; $("#weTo").value = w.we[1];
+  $("#vakSettings").innerHTML = vakken().map(v => `<div class="vakrow" data-vid="${esc(v.id)}"><label class="f">Vak<input type="text" data-k="name" value="${esc(v.name)}"></label><label class="f">Codes in rooster<input type="text" data-k="codes" value="${esc((v.codes || []).join(", "))}"></label>${BLOKKEN.map(b => `<label class="f">${b.kort}<input type="number" min="0" max="240" step="5" data-k="norm.${b.id}" value="${v.norm?.[b.id] ?? 0}" aria-label="${esc(b.n)} ${esc(v.name)} in minuten"></label>`).join("")}<label class="f wide">Link naar trainer${v.id === "eng" ? " (ingebouwd)" : ""}<input type="text" data-k="link" value="${esc(v.link || "")}" ${v.id === "eng" ? "disabled" : ""} placeholder="https://claude.ai/artifact/…"></label>${DEFAULT_VAKKEN.some(d => d.id === v.id) ? "<span></span>" : `<button class="btn sm danger" data-rmvak="${esc(v.id)}">Verwijder</button>`}</div>`).join("");
 }
 $("#vakSettings").addEventListener("change", e => {
   const inp = e.target, row = inp.closest("[data-vid]"); if (!row) return; const v = vakById(row.dataset.vid); if (!v) return;
   const k = inp.dataset.k;
   if (k === "codes") v.codes = inp.value.split(",").map(s => s.trim()).filter(Boolean);
-  else if (k === "goal") v.goal = Math.max(0, Math.min(14, parseInt(inp.value, 10) || 0));
+  else if (k && k.startsWith("norm.")) v.norm = { ...(v.norm || DEFAULT_NORM), [k.slice(5)]: Math.max(0, Math.min(240, parseInt(inp.value, 10) || 0)) };
   else if (k === "name") v.name = inp.value.trim() || v.name;
   else if (k === "link") v.link = /^https:\/\//.test(inp.value.trim()) ? inp.value.trim() : "";
   saveSettings(); fillVakSelects(); renderTrainers();
 });
 $("#vakSettings").addEventListener("click", e => { const b = e.target.closest("[data-rmvak]"); if (!b) return; S.settings.vakken = vakken().filter(v => v.id !== b.dataset.rmvak); saveSettings(); renderSettings(); fillVakSelects(); });
-$("#addVak").onclick = () => { const n = $("#newVak").value.trim(); if (!n) return; const used = vakken().map(v => v.color); const color = EXTRA_COLORS.find(c => !used.includes(c)) || EXTRA_COLORS[vakken().length % 4]; vakken().push({ id: "v" + uid().slice(-6), name: n, codes: [], goal: 2, color, link: "", info: "" }); $("#newVak").value = ""; saveSettings(); renderSettings(); fillVakSelects(); };
+$("#addVak").onclick = () => { const n = $("#newVak").value.trim(); if (!n) return; const used = vakken().map(v => v.color); const color = EXTRA_COLORS.find(c => !used.includes(c)) || EXTRA_COLORS[vakken().length % 4]; vakken().push({ id: "v" + uid().slice(-6), name: n, codes: [], norm: { ...DEFAULT_NORM }, color, link: "", info: "" }); $("#newVak").value = ""; saveSettings(); renderSettings(); fillVakSelects(); };
+["wdFrom", "wdTo", "weFrom", "weTo"].forEach(id => $("#" + id).onchange = () => {
+  const w = { wd: [$("#wdFrom").value || DEFAULT_WINDOW.wd[0], $("#wdTo").value || DEFAULT_WINDOW.wd[1]], we: [$("#weFrom").value || DEFAULT_WINDOW.we[0], $("#weTo").value || DEFAULT_WINDOW.we[1]] };
+  S.settings.window = w; saveSettings();
+});
 $("#ceDate").onchange = e => { if (e.target.value){ S.settings.ceDate = e.target.value; saveSettings(); } };
 
 /* ================= agenda-weergave ================= */
 function renderAgenda(){
+  const w = S.settings.window || DEFAULT_WINDOW, tot = studyVakken().reduce((a, v) => a + normTotal(v), 0);
+  $("#planIntro").textContent = `Zoekt vrije tijd tussen ${w.wd[0]} en ${w.wd[1]} op schooldagen (weekend ${w.we[0]}–${w.we[1]}) en plant per vak wat nog openstaat: theorie stampen, dan praktisch toepassen, dan herhalen, als één blok waar het past. Samen ${fmtMin(tot)} per dag. Wat je al gelogd of ingepland hebt, telt mee.`;
   const ws = addDays(startOfWeek(new Date()), 7 * calState.weekOffset);
   $("#wkLabel").textContent = `Week ${isoWeek(ws)} · ${ws.getDate()} ${MAANDEN[ws.getMonth()]} – ${addDays(ws, 6).getDate()} ${MAANDEN[addDays(ws, 6).getMonth()]}`;
   const n = $("#calNotice");
@@ -653,7 +836,7 @@ function renderAgenda(){
   $("#weekDays").innerHTML = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(ws, i), k = ymd(d);
     const de = evs.filter(e => e.allDay ? (k >= ymd(e.start) && k < ymd(e.end)) : ymd(e.start) === k);
-    return `<div class="day ${k === today ? "today" : ""}"><div class="dl">${DAGEN[d.getDay()]} <b>${d.getDate()}</b> ${MAANDEN[d.getMonth()]}</div><div class="evs">${de.length ? de.map(evRow).join("") : `<span class="empty small">${calState.loadingWeek || !mcpReady ? "" : "vrij"}</span>`}</div></div>`;
+    return `<div class="day ${k === today ? "today" : ""}"><div class="dl">${DAGEN[d.getDay()]} <b>${d.getDate()}</b> ${MAANDEN[d.getMonth()]}${(() => { const sm = de.filter(e => e.study && !e.allDay).reduce((a, e) => a + Math.round((e.end - e.start) / 60000), 0); return sm ? `<span class="st">studie ${fmtMin(sm)}</span>` : ""; })()}</div><div class="evs">${de.length ? de.map(evRow).join("") : `<span class="empty small">${calState.loadingWeek || !mcpReady ? "" : "vrij"}</span>`}</div></div>`;
   }).join("");
 }
 $("#wkPrev").onclick = () => { calState.weekOffset--; loadWeek(false); };
@@ -661,14 +844,15 @@ $("#wkNext").onclick = () => { calState.weekOffset++; loadWeek(false); };
 $("#wkToday").onclick = () => { calState.weekOffset = 0; loadWeek(false); };
 $("#wkRefresh").onclick = () => { loadWeek(true); loadUpcoming(true); };
 $("#pfDate").value = ymd(new Date());
+$("#pfBlok").onchange = () => { const v = vakById($("#pfVak").value), m = v?.norm?.[$("#pfBlok").value]; if (m && [...$("#pfDur").options].some(o => +o.value === m)) $("#pfDur").value = String(m); };
 $("#planForm").addEventListener("submit", async e => {
   e.preventDefault(); const msg = $("#pfMsg");
   if (!mcp){ msg.textContent = calErrCopy({ code: "not_granted" }); return; }
-  const v = vakById($("#pfVak").value); const what = $("#pfWhat").value.trim();
+  const v = vakById($("#pfVak").value); const what = $("#pfWhat").value.trim(); const bl = blokById($("#pfBlok").value);
   const [h, m] = $("#pfStart").value.split(":").map(Number); const s = parseYmd($("#pfDate").value); s.setHours(h || 16, m || 0, 0, 0);
   const en = new Date(s.getTime() + parseInt($("#pfDur").value, 10) * 60000);
   const btn = e.submitter; if (btn) btn.disabled = true; msg.textContent = "Bezig…";
-  try { await createEvent({ titel: `Studie: ${v ? v.name : "Algemeen"}${what ? " – " + what : ""}`, start: localIso(s), eind: localIso(en) }); msg.textContent = "Staat in je agenda."; $("#pfWhat").value = ""; }
+  try { await createEvent({ titel: `Studie: ${v ? v.name : "Algemeen"} – ${bl ? bl.n : "studeren"}${what ? " – " + what : ""}`, start: localIso(s), eind: localIso(en), beschrijving: bl ? bl.tip : "" }); msg.textContent = "Staat in je agenda."; $("#pfWhat").value = ""; }
   catch (err) { msg.textContent = calErrCopy(err); }
   if (btn) btn.disabled = false;
 });
@@ -699,7 +883,8 @@ function updateClaudeUi(){
 }
 function weekdayStr(){ const d = new Date(); return `${DAGEN_LANG[d.getDay()]} ${d.getDate()} ${["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"][d.getMonth()]} ${d.getFullYear()}, ${fmtTime(d)}`; }
 function contextText(){
-  const v = vakken().map(x => `${x.name} (id ${x.id}, codes ${(x.codes || []).join("/") || "-"}, weekdoel ${x.goal} sessies, deze week ${sessionsThisWeek(x.id)})`).join("; ");
+  const today = ymd(new Date());
+  const v = vakken().map(x => `${x.name} (id ${x.id}, codes ${(x.codes || []).join("/") || "-"}, dagnorm ${BLOKKEN.map(b => `${b.kort.toLowerCase()} ${x.norm?.[b.id] || 0}`).join(" + ")} min, vandaag gedaan ${BLOKKEN.map(b => `${b.kort.toLowerCase()} ${minutesOn(x.id, today, b.id)}`).join(", ")} min, vandaag nog ingepland ${plannedLeft(x.id, today)} min)`).join("; ");
   const open = S.tasks.filter(t => !t.done).slice(0, 40).map(t => `- [${t.id}] ${t.title} | vak ${vakById(t.vak)?.name || "algemeen"} | ${t.kind || ""} | deadline ${t.due || "geen"}`).join("\n");
   return `Vandaag is het ${weekdayStr()} (tijdzone Europe/Amsterdam). Thomas zit in 6 vwo en doet dit schooljaar eindexamen; het eerste CE is op ${S.settings.ceDate}.\nVakken: ${v}.\nOpen taken:\n${open || "(geen)"}`;
 }
@@ -708,7 +893,9 @@ ${contextText()}
 Regels:
 - Lees altijd eerst de agenda (agenda_lezen) voordat je iets inplant of iets over zijn dag zegt.
 - Plan nooit over bestaande afspraken of lessen heen. Plan op schooldagen niet voor 15:30 tenzij de agenda vrij is, en nooit na 22:00. Houd reistijd-afspraken vrij.
-- Studieblokken heten "Studie: <vak> – <onderwerp>" en duren meestal 45 tot 90 minuten.
+- Dagnorm: elk vak krijgt elke dag thuis minimaal 2 uur, verdeeld in 30 min theorie stampen, 60 min praktisch toepassen en 30 min actief herhalen + oudere stof (per vak instelbaar, zie de context). Plan die bij voorkeur aaneengesloten in de volgorde theorie → toepassen → herhalen, met 10 minuten pauze tussen vakken.
+- Studieblokken heten "Studie: <vak> – <blok>" (bijv. "Studie: Wiskunde B – Praktisch toepassen") of, als één blok alle drie de onderdelen bevat, "Studie: <vak> (theorie 30 · toepassen 60 · herhalen 30)". Zet in de beschrijving per onderdeel de tijden.
+- Past de dagnorm niet in de vrije tijd, zeg dat dan eerlijk en noem hoeveel minuten er tekort zijn.
 - Verwijderen gaat alleen via afspraak_verwijderen; Thomas bevestigt dat zelf in het paneel.
 - Toetsen, SE's, PO's en deadlines uit de agenda horen ook in de takenlijst (taak_toevoegen, met de datum als deadline).
 - Sluit af met een korte opsomming van wat je hebt gedaan.`;
@@ -764,7 +951,7 @@ $("#claudeCheck").onclick = async () => {
   checkCtl = new AbortController(); $("#claudeCheck").disabled = true; $("#claudeCheckStop").hidden = false;
   const c = computeCheck();
   const evs = calState.upcoming ? calState.upcoming.map(e => `- ${e.allDay ? ymd(e.start) + " hele dag" : localIso(e.start).slice(0, 16) + "–" + fmtTime(e.end)} ${e.title}${e.toets ? " [TOETS]" : ""}${e.study ? " [studieblok]" : ""}`).join("\n") : "(agenda niet beschikbaar)";
-  const prompt = `${contextText()}\n\nTaken die te laat zijn: ${c.overdue.map(t => t.title).join("; ") || "geen"}.\nSessies deze week: ${c.goals.map(g => `${g.v.name} ${g.n}/${g.v.goal}`).join(", ")}.\nRecent geoefend: ${S.log.slice(0, 15).map(l => `${vakById(l.vak)?.name || l.vak}: ${l.what} (${fmtDay(new Date(l.at))})`).join("; ") || "niets gelogd"}.\nAgenda komende 14 dagen:\n${evs}\n\nControleer of Thomas alles af heeft en op schema ligt voor zijn toetsen en het examen. Antwoord met alleen JSON in deze vorm:\n{"oordeel":"één zin","punten":[{"status":"ok"|"let_op"|"te_laat","tekst":"korte zin"}],"voorstellen":[{"titel":"Studie: <vak> – <onderwerp>","start":"YYYY-MM-DDTHH:MM","eind":"YYYY-MM-DDTHH:MM","waarom":"korte reden"}]}\nMaximaal 6 punten en 4 voorstellen. Voorstellen alleen op vrije momenten volgens de agenda, tussen 15:30 en 22:00 op schooldagen of overdag in het weekend, binnen de komende 7 dagen.`;
+  const prompt = `${contextText()}\n\nTaken die te laat zijn: ${c.overdue.map(t => t.title).join("; ") || "geen"}.\nStudietijd vandaag (gedaan/norm in minuten): ${c.study.map(x => `${x.v.name} ${x.done}/${x.total}, nog ingepland ${x.planned}`).join("; ")}. Dagnorm per vak: 30 theorie stampen + 60 praktisch toepassen + 30 actief herhalen en oude stof.\nRecent geoefend: ${S.log.slice(0, 15).map(l => `${vakById(l.vak)?.name || l.vak}: ${l.what} (${fmtDay(new Date(l.at))})`).join("; ") || "niets gelogd"}.\nAgenda komende 14 dagen:\n${evs}\n\nControleer of Thomas alles af heeft: zijn taken, zijn dagelijkse studietijd per vak en zijn voorbereiding op toetsen en het examen. Antwoord met alleen JSON in deze vorm:\n{"oordeel":"één zin","punten":[{"status":"ok"|"let_op"|"te_laat","tekst":"korte zin"}],"voorstellen":[{"titel":"Studie: <vak> – <onderwerp>","start":"YYYY-MM-DDTHH:MM","eind":"YYYY-MM-DDTHH:MM","waarom":"korte reden"}]}\nMaximaal 6 punten en 6 voorstellen; voorstellen vullen vooral de studietijd aan die vandaag of morgen nog ontbreekt. Voorstellen alleen op vrije momenten volgens de agenda, tussen 15:30 en 22:00 op schooldagen of overdag in het weekend, binnen de komende 7 dagen.`;
   try {
     const r = await sample.json(prompt, { signal: checkCtl.signal, cache: false });
     const pts = Array.isArray(r?.punten) ? r.punten : [], vs = Array.isArray(r?.voorstellen) ? r.voorstellen.filter(v => v && v.titel && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v.start) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v.eind)) : [];
@@ -778,9 +965,9 @@ $("#claudeCheck").onclick = async () => {
 /* ================= trainers ================= */
 function renderTrainers(){
   $("#trainerGrid").innerHTML = vakken().map(v => {
-    const n = sessionsThisWeek(v.id);
+    const today = ymd(new Date()), n = BLOKKEN.reduce((a, b) => a + Math.min(minutesOn(v.id, today, b.id), v.norm?.[b.id] || 0), 0), tot = normTotal(v);
     const open = v.id === "eng" ? `<button class="btn primary" data-openeng>Open trainer</button>` : v.link ? `<a class="btn primary" href="${esc(v.link)}" target="_blank" rel="noopener" style="text-decoration:none">Open trainer ↗</a>` : `<button class="btn primary" data-qc="${esc(v.id)}">Oefen met Claude</button>`;
-    return `<div class="card tcard v-${esc(v.color)}"><span class="vk v-${esc(v.color)}">${n}/${v.goal} sessies deze week</span><h3>${esc(v.name)}</h3><p>${esc(v.info || (v.link ? "Je eigen trainer." : "Nog geen eigen trainer. Oefen met Claude, of zet een trainerlink bij Afvinken → Vakken."))}</p><div class="row">${open}${v.id !== "eng" ? `<button class="btn" data-plus="${esc(v.id)}">+1 sessie</button>` : ""}</div></div>`;
+    return `<div class="card tcard v-${esc(v.color)}"><span class="vk v-${esc(v.color)}">vandaag ${n}/${tot} min ${weekDots(v)}</span><h3>${esc(v.name)}</h3><p>${esc(v.info || (v.link ? "Je eigen trainer." : "Nog geen eigen trainer. Oefen met Claude, of zet een trainerlink bij Afvinken → Vakken."))}</p><div class="row">${open}${v.id !== "eng" ? `<button class="btn" data-tm="${esc(v.id)}">Start timer</button>` : ""}</div></div>`;
   }).join("");
 }
 $("#trainerGrid").addEventListener("click", e => {
@@ -790,12 +977,12 @@ $("#trainerGrid").addEventListener("click", e => {
 
 /* generieke quiz */
 function quiz(box, items, title, onDone){
-  let i = 0, score = 0, picked = null, logged = false;
+  let i = 0, score = 0, picked = null, logged = false; const t0 = Date.now();
   const order = shuffle(items).map(it => ({ ...it, sh: shuffle(it.opts.map((t, k) => ({ t, ok: k === it.a }))) }));
   function draw(){
     if (i >= order.length){
       box.innerHTML = `<div class="qbox"><p class="qmeta">${esc(title)} · klaar</p><p class="big">${score} / ${order.length}</p><p class="muted" style="margin:0">${score === order.length ? "Alles goed." : score >= order.length * .7 ? "Goed bezig. Lees de uitleg bij je fouten nog eens." : "Herhaal deze ronde nog een keer; de vragen komen in een andere volgorde."}</p><div class="row"><button class="btn primary" data-again>Nog een ronde</button></div></div>`;
-      if (!logged && onDone){ logged = true; onDone(score, order.length); }
+      if (!logged && onDone){ logged = true; onDone(score, order.length, Math.max(1, Math.min(90, Math.round((Date.now() - t0) / 60000)))); }
       box.querySelector("[data-again]").onclick = () => quiz(box, items, title, onDone); return;
     }
     const it = order[i];
@@ -816,7 +1003,7 @@ $("#qcGo").onclick = async () => {
     const r = await sample.json(`Maak 5 meerkeuzevragen voor ${v?.name || "het vak"} op 6-vwo-eindexamenniveau (Nederland) over: ${topic}. Vragen en uitleg in het Nederlands${v?.id === "eng" ? " (Engelse voorbeeldzinnen mogen)" : ""}. Elke vraag 4 opties, precies één goed, plausibele afleiders gebaseerd op veelgemaakte fouten. Antwoord met alleen een JSON-array: [{"q":"vraag","opts":["A","B","C","D"],"a":0,"uitleg":"waarom dit het juiste antwoord is, 1-2 zinnen"}]`, { signal: qcCtl.signal });
     const items = (Array.isArray(r) ? r : []).filter(x => x && typeof x.q === "string" && Array.isArray(x.opts) && x.opts.length >= 2 && Number.isInteger(x.a) && x.a >= 0 && x.a < x.opts.length).map(x => ({ q: x.q, opts: x.opts.map(String), a: x.a, uitleg: String(x.uitleg || "") }));
     if (!items.length) throw { code: "invalid_json" };
-    quiz(box, items, `${v?.name || ""} · ${topic}`, (s, n) => addLog(v?.id || "", `Claude-check ${topic}: ${s}/${n}`));
+    quiz(box, items, `${v?.name || ""} · ${topic}`, (s, n, min) => addLog(v?.id || "", `Claude-check ${topic}: ${s}/${n}`, { min, blok: "herhalen" }));
   } catch (e) { const m = sampleErrCopy(e); box.innerHTML = m ? `<div class="notice bad">${esc(m)}</div>` : ""; }
   qcCtl = null; $("#qcGo").disabled = !sample;
 };
@@ -892,12 +1079,13 @@ const ENG_TEXTS = [
     { type: "open", q: "Noem twee problemen die volgens alinea 5 de toekomst van de nachttrein bedreigen. Antwoord in het Nederlands.", model: ["Slaaprijtuigen zijn duur om te bouwen / er zijn hoge kosten voor het gebruik van het spoor.", "Eén uitgevallen trein kan honderden reizigers laten stranden."], uitleg: "Elk van de drie genoemde problemen telt; twee is genoeg voor de punten." }
   ]}
 ];
-let engSub = "types";
+let engSub = "types", engViewStart = Date.now();
 function openEng(){ setTab("trainers"); $("#trainerHome").hidden = true; $("#engApp").hidden = false; renderEng(); window.scrollTo({ top: 0 }); }
 function closeEng(){ $("#engApp").hidden = true; $("#trainerHome").hidden = false; }
 function renderEng(){
+  engViewStart = Date.now();
   const app = $("#engApp"); const subs = [["types","Vraagtypen"],["sig","Signaalwoorden"],["toon","Toonwoorden"],["tekst","Oefenteksten"],["schrijf","Schrijfcheck"]];
-  app.innerHTML = `<div class="row"><button class="btn sm ghost" id="engBack">‹ Alle trainers</button><span class="vk v-eng">${sessionsThisWeek("eng")}/${vakById("eng")?.goal ?? 0} sessies deze week</span></div>
+  app.innerHTML = `<div class="row"><button class="btn sm ghost" id="engBack">‹ Alle trainers</button><span class="vk v-eng">vandaag ${BLOKKEN.map(b => `${b.kort.toLowerCase()} ${minutesOn("eng", ymd(new Date()), b.id)}/${vakById("eng")?.norm?.[b.id] ?? 0}`).join(" · ")} min</span></div>
   <div><h2 style="font-size:1.8rem;margin:0">Engels <span class="mark">leesvaardigheid</span></h2><p class="muted" style="margin:4px 0 0">CE vwo: 150 minuten, alleen leesvaardigheid, vragen in het Nederlands. Je mag een woordenboek gebruiken, maar zoek alleen op wat je voor de vraag nodig hebt.</p></div>
   <div class="subnav">${subs.map(([k, n]) => `<button class="chip" data-es="${k}" aria-pressed="${engSub === k}">${n}</button>`).join("")}</div><div id="engBody" class="sec"></div>`;
   $("#engBack").onclick = closeEng;
@@ -908,11 +1096,11 @@ function renderEng(){
   } else if (engSub === "sig"){
     body.innerHTML = `<p class="muted" style="margin:0">Welk verband geeft het signaalwoord aan? Twaalf per ronde, steeds een andere selectie.</p><div class="card" id="sigBox"></div>`;
     const items = shuffle(SIG).slice(0, 12).map(([w, nl, cat]) => ({ q: `“${w}” geeft welk verband aan?`, opts: [cat, ...shuffle(SIG_CATS.filter(c => c !== cat)).slice(0, 3)], a: 0, uitleg: `${w} = ${nl} → ${cat}.` }));
-    quiz($("#sigBox"), items, "Signaalwoorden", (s, n) => addLog("eng", `Signaalwoorden ${s}/${n}`));
+    quiz($("#sigBox"), items, "Signaalwoorden", (s, n, min) => addLog("eng", `Signaalwoorden ${s}/${n}`, { min, blok: "theorie" }));
   } else if (engSub === "toon"){
     body.innerHTML = `<p class="muted" style="margin:0">Woorden waarmee CE-vragen de toon of houding van de schrijver beschrijven. Tien per ronde.</p><div class="card" id="toonBox"></div>`;
     const items = shuffle(TOON).slice(0, 10).map(([w, nl]) => ({ q: `Wat betekent “${w}” als toon of houding?`, opts: [nl, ...shuffle(TOON.filter(t => t[0] !== w)).slice(0, 3).map(t => t[1])], a: 0, uitleg: `${w}: ${nl}.` }));
-    quiz($("#toonBox"), items, "Toonwoorden", (s, n) => addLog("eng", `Toonwoorden ${s}/${n}`));
+    quiz($("#toonBox"), items, "Toonwoorden", (s, n, min) => addLog("eng", `Toonwoorden ${s}/${n}`, { min, blok: "theorie" }));
   } else if (engSub === "tekst"){
     const gen = lsGet("sp-eng-gen", []);
     const all = [...ENG_TEXTS, ...gen];
@@ -930,7 +1118,7 @@ function renderEng(){
       const txt = $("#wrText").value.trim(); if (!txt || !sample || ctl) return;
       const out = $("#wrOut"); out.innerHTML = `<div class="out">Claude leest je tekst…</div>`; const o = out.firstChild;
       ctl = new AbortController(); $("#wrGo").disabled = true; $("#wrStop").hidden = false;
-      try { await sample(`Je bent docent Engels in 6 vwo (Nederland). Geef feedback in het Nederlands op deze leerlingtekst (${$("#wrType").value}${$("#wrTask").value.trim() ? ", opdracht: " + $("#wrTask").value.trim() : ""}). Structuur: 1) Geschat ERK-niveau (B2/C1) met één zin waarom. 2) Inhoud en opbouw. 3) Register en toon. 4) Woordenschat. 5) Grammatica en spelling: noem concrete fouten met verbetering (citeer kort). 6) De drie belangrijkste verbeterpunten. Wees eerlijk en concreet, schrijf de tekst niet voor hem uit.\n\nTekst:\n${txt.slice(0, 12000)}`, { signal: ctl.signal, onText: ({ text }) => { o.textContent = text; } }); addLog("eng", "Schrijfcheck " + $("#wrType").value); }
+      try { await sample(`Je bent docent Engels in 6 vwo (Nederland). Geef feedback in het Nederlands op deze leerlingtekst (${$("#wrType").value}${$("#wrTask").value.trim() ? ", opdracht: " + $("#wrTask").value.trim() : ""}). Structuur: 1) Geschat ERK-niveau (B2/C1) met één zin waarom. 2) Inhoud en opbouw. 3) Register en toon. 4) Woordenschat. 5) Grammatica en spelling: noem concrete fouten met verbetering (citeer kort). 6) De drie belangrijkste verbeterpunten. Wees eerlijk en concreet, schrijf de tekst niet voor de leerling uit.\n\nTekst:\n${txt.slice(0, 12000)}`, { signal: ctl.signal, onText: ({ text }) => { o.textContent = text; } }); addLog("eng", "Schrijfcheck " + $("#wrType").value, { min: Math.max(1, Math.min(90, Math.round((Date.now() - engViewStart) / 60000))), blok: "toepassen" }); engViewStart = Date.now(); }
       catch (e) { o.textContent = (e.text ? e.text + "\n\n" : "") + (sampleErrCopy(e) || "Gestopt."); }
       ctl = null; $("#wrGo").disabled = !sample; $("#wrStop").hidden = true;
     };
@@ -940,7 +1128,7 @@ const qPts = q => q.type === "wn" ? 2 : q.type === "open" ? Math.max(1, (q.model
 const normCite = s => String(s).toLowerCase().replace(/[“”"'‘’.,;:!?()]/g, "").replace(/\s+/g, " ").trim();
 function runText(body, T){
   const st = T.vragen.map(() => ({ ans: null, checked: false, pts: 0, open: "", ticks: [] }));
-  let logged = false;
+  let logged = false; const t0 = Date.now();
   body.innerHTML = `<div class="row"><button class="btn sm ghost" id="txBack">‹ Alle teksten</button></div><div class="extext"><h3>${esc(T.titel)}</h3>${T.alineas.map((p, i) => `<p><span class="pn">${i + 1}</span>${esc(p)}</p>`).join("")}</div><div class="card"><div class="qlist" id="qlist"></div><div class="row" style="margin-top:16px;justify-content:space-between"><span class="res" id="txScore"></span><button class="btn hl" id="txSave" disabled>Opslaan als sessie</button></div></div>`;
   $("#txBack").onclick = () => { engSub = "tekst"; renderEng(); };
   const ql = $("#qlist");
@@ -978,7 +1166,7 @@ function runText(body, T){
   });
   ql.addEventListener("input", e => { const t = e.target; if (t.dataset.open !== undefined || t.dataset.cite !== undefined) st[+t.dataset.q].open = t.value; });
   ql.addEventListener("change", e => { const t = e.target; if (t.dataset.tick !== undefined){ const s = st[+t.dataset.q]; s.ticks[+t.dataset.tick] = t.checked; s.pts = s.ticks.filter(Boolean).length; draw(); } });
-  $("#txSave").onclick = () => { if (logged) return; logged = true; const max = T.vragen.reduce((a, q) => a + qPts(q), 0), got = st.reduce((a, s) => a + s.pts, 0); addLog("eng", `Oefentekst “${T.titel}”: ${got}/${max}`); draw(); };
+  $("#txSave").onclick = () => { if (logged) return; logged = true; const max = T.vragen.reduce((a, q) => a + qPts(q), 0), got = st.reduce((a, s) => a + s.pts, 0); addLog("eng", `Oefentekst “${T.titel}”: ${got}/${max}`, { min: Math.max(1, Math.min(120, Math.round((Date.now() - t0) / 60000))), blok: "toepassen" }); draw(); };
   draw();
 }
 let genCtl = null;
