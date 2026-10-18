@@ -1,0 +1,1031 @@
+<title>Thomas Studieplanner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: schoolagenda — één kolom met tabbladen; markeerstift-geel voor wat nú aandacht vraagt, vakkleuren als codering, inktblauw voor acties. */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --sunk:#E9EDF2; --ink:#16202E; --muted:#566275; --line:#D6DCE5;
+  --accent:#1F4FD8; --accent-ink:#FFFFFF; --accent-soft:rgba(31,79,216,.09);
+  --hl:#FFE45C; --hl-soft:rgba(255,228,92,.55); --hl-ink:#3D3100;
+  --ok:#17784A; --ok-soft:rgba(23,120,74,.10); --warn:#A85A00; --warn-soft:rgba(168,90,0,.10); --bad:#BF3328; --bad-soft:rgba(191,51,40,.09);
+  --wib:#6542D6; --ned:#0B7480; --eng:#B0215F; --c1:#4D7C0F; --c2:#9A5B00; --c3:#0369A1; --c4:#8B3FD9;
+  --shadow:0 1px 2px rgba(22,32,46,.06),0 8px 24px -16px rgba(22,32,46,.25);
+  --f-display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E131A; --surface:#161D27; --sunk:#1D2531; --ink:#E5EAF1; --muted:#97A3B5; --line:#2A3544;
+  --accent:#86A8FF; --accent-ink:#0E131A; --accent-soft:rgba(134,168,255,.12);
+  --hl:#E9D044; --hl-soft:rgba(233,208,68,.28); --hl-ink:#211A00;
+  --ok:#53C98F; --ok-soft:rgba(83,201,143,.12); --warn:#F2A54A; --warn-soft:rgba(242,165,74,.12); --bad:#FF7B70; --bad-soft:rgba(255,123,112,.12);
+  --wib:#AE98FF; --ned:#4CC6D0; --eng:#F278AE; --c1:#9BD15A; --c2:#E9B04A; --c3:#5CC0F5; --c4:#C69BFF;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -18px rgba(0,0,0,.8); color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E131A; --surface:#161D27; --sunk:#1D2531; --ink:#E5EAF1; --muted:#97A3B5; --line:#2A3544;
+  --accent:#86A8FF; --accent-ink:#0E131A; --accent-soft:rgba(134,168,255,.12);
+  --hl:#E9D044; --hl-soft:rgba(233,208,68,.28); --hl-ink:#211A00;
+  --ok:#53C98F; --ok-soft:rgba(83,201,143,.12); --warn:#F2A54A; --warn-soft:rgba(242,165,74,.12); --bad:#FF7B70; --bad-soft:rgba(255,123,112,.12);
+  --wib:#AE98FF; --ned:#4CC6D0; --eng:#F278AE; --c1:#9BD15A; --c2:#E9B04A; --c3:#5CC0F5; --c4:#C69BFF;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -18px rgba(0,0,0,.8); color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:900px;margin:0 auto}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mark{background:linear-gradient(transparent 52%,var(--hl-soft) 52%);padding:0 .1em}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+
+/* kop */
+header.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 20px;padding-top:22px;padding-bottom:14px}
+.brand .eyebrow{font:600 .74rem var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.brand h1{font:800 clamp(1.9rem,6vw,2.6rem)/1 var(--f-display);margin:4px 0 0;letter-spacing:-.02em;text-wrap:balance}
+.count{display:flex;align-items:baseline;gap:10px}
+.count b{font:600 2.3rem/1 var(--f-mono);font-variant-numeric:tabular-nums;background:var(--hl);color:var(--hl-ink);padding:2px 8px;border-radius:4px}
+.count span{font-size:.92rem;color:var(--muted);max-width:20ch;line-height:1.25}
+.savestate{font:500 .74rem var(--f-mono);color:var(--muted);width:100%;text-align:right}
+
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:8;background:var(--bg);display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{flex:1 0 auto;border:0;background:none;padding:11px 12px;font:700 .95rem var(--f-body);color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs .badge{display:inline-block;min-width:1.4em;margin-left:6px;padding:0 5px;border-radius:999px;background:var(--bad);color:var(--surface);font:600 .72rem/1.5 var(--f-mono);text-align:center}
+
+h2{font:700 1.3rem/1.2 var(--f-display);margin:0 0 10px;text-wrap:balance}
+h3{font:700 1rem/1.3 var(--f-body);margin:0 0 8px}
+.sec{display:flex;flex-direction:column;gap:18px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.card>h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card>h3 small{font:500 .76rem var(--f-mono);color:var(--muted)}
+.empty{color:var(--muted);font-size:.93rem;padding:6px 0;margin:0}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:8px 13px;font-weight:700;font-size:.92rem;cursor:pointer;line-height:1.2}
+.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover:not(:disabled){color:var(--accent-ink);filter:brightness(1.07)}
+.btn.hl{background:var(--hl);border-color:var(--hl);color:var(--hl-ink)}
+.btn.hl:hover:not(:disabled){color:var(--hl-ink);filter:brightness(1.03)}
+.btn.sm{padding:4px 9px;font-size:.82rem}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad);border-color:var(--bad);background:transparent}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.spacer{flex:1}
+
+input[type=text],input[type=date],input[type=time],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-width:0}
+textarea{width:100%;resize:vertical;line-height:1.5}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:.8rem;font-weight:700;color:var(--muted);min-width:0}
+label.f input,label.f select{font-weight:400;color:var(--ink);font-size:.95rem}
+
+/* status */
+.verdict{display:flex;gap:16px;align-items:center;border-radius:12px;padding:16px 18px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+.verdict .dot{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font:700 1.25rem var(--f-mono)}
+.verdict.ok .dot{background:var(--ok-soft);color:var(--ok);border:2px solid var(--ok)}
+.verdict.warn .dot{background:var(--hl);color:var(--hl-ink);border:2px solid var(--hl)}
+.verdict.bad .dot{background:var(--bad-soft);color:var(--bad);border:2px solid var(--bad)}
+.verdict h2{margin:0}
+.verdict p{margin:2px 0 0;color:var(--muted)}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.checks li{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:start;padding:8px 10px;border-radius:8px;background:var(--sunk)}
+.checks li .ic{font:700 .9rem var(--f-mono);text-align:center;line-height:1.5}
+.checks li.ok .ic{color:var(--ok)} .checks li.warn .ic{color:var(--warn)} .checks li.bad .ic{color:var(--bad)}
+.checks li.bad{background:var(--bad-soft)} .checks li.warn{background:var(--warn-soft)}
+
+/* vak chips */
+.vk{display:inline-flex;align-items:center;gap:5px;font:600 .74rem var(--f-mono);color:var(--vc,var(--muted));white-space:nowrap}
+.vk::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--vc,var(--muted))}
+.v-wib{--vc:var(--wib)} .v-ned{--vc:var(--ned)} .v-eng{--vc:var(--eng)} .v-c1{--vc:var(--c1)} .v-c2{--vc:var(--c2)} .v-c3{--vc:var(--c3)} .v-c4{--vc:var(--c4)}
+.pill{display:inline-block;font:600 .72rem var(--f-mono);padding:1px 7px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.pill.toets{color:var(--bad)} .pill.study{color:var(--ok)} .pill.late{color:var(--bad)} .pill.soon{color:var(--warn)}
+
+/* taken */
+.tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.task{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:9px 0;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:0}
+.task input[type=checkbox]{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ok);cursor:pointer}
+.task .tt{font-weight:700;overflow-wrap:anywhere}
+.task.done .tt{text-decoration:line-through;color:var(--muted);font-weight:400}
+.task .tm{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.82rem;color:var(--muted);margin-top:2px}
+.task .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:.82rem;padding:2px 4px}
+.task .x.sure{color:var(--bad);font-weight:700}
+.grouph{font:600 .76rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 2px}
+.grouph.bad{color:var(--bad)}
+.addform{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:end}
+@media (max-width:640px){.addform{grid-template-columns:1fr 1fr}.addform .wide{grid-column:1/-1}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:.85rem;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+
+/* doelen */
+.goals{display:flex;flex-direction:column;gap:10px}
+.goal{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.goal .bar{grid-column:1/-1;height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;display:flex;gap:2px}
+.goal .bar i{flex:1;background:var(--sunk);border-right:1px solid var(--surface)}
+.goal .bar i.on{background:var(--vc)}
+.goal .gn{font:600 .82rem var(--f-mono);color:var(--muted)}
+.goal .gn.behind{color:var(--warn)} .goal .gn.done{color:var(--ok)}
+
+/* agenda */
+.weekbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.weekbar strong{font:700 1.05rem var(--f-display)}
+.days{display:flex;flex-direction:column;gap:2px}
+.day{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.day .dl{font:600 .82rem/1.3 var(--f-mono);color:var(--muted);text-transform:lowercase}
+.day .dl b{display:block;font:700 1.35rem/1 var(--f-display);color:var(--ink)}
+.day.today .dl b{background:var(--hl);color:var(--hl-ink);display:inline-block;padding:1px 5px;border-radius:4px}
+.evs{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ev{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:8px;align-items:start;padding:6px 10px;border-radius:7px;background:var(--sunk);border-left:4px solid var(--vc,var(--line))}
+.ev .et{font:500 .8rem/1.5 var(--f-mono);color:var(--muted)}
+.ev .en{font-weight:700;overflow-wrap:anywhere}
+.ev .en a{color:inherit;text-decoration:none}
+.ev .en a:hover{text-decoration:underline}
+.ev .eloc{font-size:.8rem;color:var(--muted)}
+.ev.toets{background:var(--bad-soft)}
+@media (max-width:520px){.day{grid-template-columns:1fr;gap:6px}.day .dl b{display:inline;margin-right:6px}.ev{grid-template-columns:1fr auto}.ev .et{grid-column:1/-1}}
+.notice{border:1px dashed var(--line);border-radius:9px;padding:12px 14px;background:var(--sunk);font-size:.93rem}
+.notice.bad{border-color:var(--bad);background:var(--bad-soft)}
+.planform{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;align-items:end}
+
+/* claude */
+.chat{display:flex;flex-direction:column;gap:8px;max-height:460px;overflow-y:auto;padding:4px 2px}
+.msg{padding:10px 12px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-width:92%;font-size:.95rem}
+.msg.c{background:var(--accent-soft);align-self:flex-start}
+.msg.u{background:var(--sunk);align-self:flex-end}
+.msg .who{display:block;font:600 .7rem var(--f-mono);color:var(--accent);margin-bottom:2px;text-transform:uppercase;letter-spacing:.06em}
+.msg.u .who{color:var(--muted)}
+.msg.tool{background:transparent;border:1px dashed var(--line);font:500 .78rem var(--f-mono);color:var(--muted);padding:5px 10px;align-self:flex-start}
+.chatin{display:flex;gap:8px}
+.chatin textarea{min-height:46px;height:46px}
+.acts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.acts li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;background:var(--sunk);font-size:.88rem}
+.acts li.confirm{background:var(--bad-soft);border:1px solid var(--bad)}
+.out{white-space:pre-wrap;background:var(--sunk);border-radius:9px;padding:12px 14px;font-size:.95rem;overflow-wrap:anywhere}
+
+/* trainers */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:14px}
+.tcard{display:flex;flex-direction:column;gap:10px;border-top:5px solid var(--vc)}
+.tcard h3{font:800 1.25rem/1.1 var(--f-display);margin:0}
+.tcard p{margin:0;font-size:.92rem;color:var(--muted)}
+.tcard .row{margin-top:auto}
+
+/* engels */
+.subnav{display:flex;flex-wrap:wrap;gap:6px}
+.qbox{display:flex;flex-direction:column;gap:12px}
+.qq{font:700 1.2rem/1.35 var(--f-display);margin:0;text-wrap:balance}
+.qmeta{font:500 .78rem var(--f-mono);color:var(--muted);margin:0}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{text-align:left;padding:10px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;font-size:.97rem}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.dim{opacity:.55}
+.opt:disabled{cursor:default}
+.fb{margin:0;padding:10px 13px;border-radius:8px;border-left:4px solid}
+.fb.ok{background:var(--ok-soft);border-color:var(--ok)} .fb.no{background:var(--bad-soft);border-color:var(--bad)}
+.big{font:600 2.6rem/1 var(--f-mono);margin:0}
+.types{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.type h3{font:700 1.05rem var(--f-display)}
+.type dl{margin:0;display:grid;gap:6px;font-size:.93rem}
+.type dt{font:600 .72rem var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.type dd{margin:0}
+.type dd.trap{color:var(--bad)}
+.extext{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 20px;max-height:min(70vh,560px);overflow-y:auto}
+.extext h3{font:800 1.3rem/1.2 var(--f-display);margin:0 0 10px}
+.extext p{margin:0 0 10px;max-width:68ch;font-size:1rem}
+.extext p .pn{font:600 .78rem var(--f-mono);color:var(--eng);margin-right:8px}
+.qlist{display:flex;flex-direction:column;gap:14px}
+.qitem{display:flex;flex-direction:column;gap:8px}
+.qitem .qh{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.qitem .qh span{font:600 .78rem var(--f-mono);color:var(--muted);white-space:nowrap}
+.wn{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;font-size:.95rem}
+.model{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+.model label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.model input{margin-top:4px;accent-color:var(--ok)}
+.res{font:600 .9rem var(--f-mono)}
+.res.ok{color:var(--ok)} .res.no{color:var(--bad)} .res.mid{color:var(--warn)}
+.vakrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.4fr) 80px minmax(0,1.6fr) auto;gap:8px;align-items:end;padding:8px 0;border-bottom:1px solid var(--line)}
+@media (max-width:640px){.vakrow{grid-template-columns:1fr 1fr}.vakrow .wide{grid-column:1/-1}}
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="eyebrow">Thomas · 6 vwo · examenjaar</div><h1>Studieplanner</h1></div>
+    <div class="count"><b id="ceDays">–</b><span id="ceLabel">dagen tot het eerste CE</span></div>
+    <div class="savestate" id="saveState">laden…</div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Onderdelen">
+    <button role="tab" id="tab-vandaag" data-tab="vandaag" aria-selected="true">Vandaag</button>
+    <button role="tab" id="tab-agenda" data-tab="agenda" aria-selected="false">Agenda + Claude</button>
+    <button role="tab" id="tab-taken" data-tab="taken" aria-selected="false">Afvinken<span class="badge" id="lateBadge" hidden></span></button>
+    <button role="tab" id="tab-trainers" data-tab="trainers" aria-selected="false">Trainers</button>
+  </nav>
+
+  <!-- VANDAAG -->
+  <section class="sec" id="p-vandaag" role="tabpanel">
+    <div class="verdict" id="verdict"><div class="dot">…</div><div><h2>Even kijken…</h2><p>Je taken, weekdoelen en agenda worden gecontroleerd.</p></div></div>
+    <div class="grid2">
+      <div class="card"><h3>Wat er nog open staat <small id="checkStamp"></small></h3><ul class="checks" id="checkList"></ul></div>
+      <div class="card"><h3>Weekdoelen <small id="weekLabel"></small></h3><div class="goals" id="goalList"></div><p class="small muted" style="margin:10px 0 0">Een trainersessie telt automatisch mee bij Engels. Bij Wiskunde B en Nederlands tik je na het oefenen op +1.</p></div>
+      <div class="card"><h3>Vandaag in je agenda <small id="todayStamp"></small></h3><div id="todayEvents"><p class="empty">Agenda laden…</p></div></div>
+      <div class="card"><h3>Eerstvolgende taken</h3><ul class="tasks" id="nextTasks"></ul></div>
+    </div>
+    <div class="card">
+      <h3>Laat Claude alles nalopen</h3>
+      <p class="small muted" style="margin:0 0 10px">Claude legt je taken, weekdoelen en de komende twee weken uit je agenda naast elkaar, zegt wat je mist en stelt studieblokken voor die je met één tik in je agenda zet.</p>
+      <div class="row"><button class="btn primary" id="claudeCheck">Check of ik alles af heb</button><button class="btn ghost" id="claudeCheckStop" hidden>Stop</button></div>
+      <div id="claudeCheckOut" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- AGENDA -->
+  <section class="sec" id="p-agenda" role="tabpanel" hidden>
+    <div class="card">
+      <div class="weekbar"><button class="btn sm" id="wkPrev">‹ Vorige</button><strong id="wkLabel">Deze week</strong><span class="row"><button class="btn sm" id="wkToday">Vandaag</button><button class="btn sm" id="wkNext">Volgende ›</button><button class="btn sm ghost" id="wkRefresh" title="Opnieuw ophalen">Vernieuwen</button></span></div>
+      <div id="calNotice" style="margin-top:10px"></div>
+      <div class="days" id="weekDays" style="margin-top:8px"></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Claude voor je agenda</h3>
+        <div class="chips" id="chatChips" style="margin-bottom:10px">
+          <button class="chip" data-q="Plan voor deze week studieblokken voor mijn weekdoelen, rond mijn lessen en afspraken heen.">Plan mijn week</button>
+          <button class="chip" data-q="Wat heb ik morgen, en wat moet ik vanavond nog doen?">Wat heb ik morgen?</button>
+          <button class="chip" data-q="Zoek mijn eerstvolgende toets of deadline en plan daarvoor herhaalblokken in de dagen ervoor.">Plan voor mijn volgende toets</button>
+          <button class="chip" data-q="Zet alle toetsen en deadlines uit mijn agenda van de komende 3 weken in mijn takenlijst.">Toetsen naar takenlijst</button>
+        </div>
+        <div class="chat" id="chat" aria-live="polite"><div class="msg c"><span class="who">Claude</span>Ik kan je Google Calendar lezen, studieblokken inplannen, afspraken verschuiven en taken toevoegen. Verwijderen doe ik alleen nadat jij hieronder op Verwijder tikt.</div></div>
+        <div class="chatin" style="margin-top:10px"><textarea id="chatIn" placeholder="Bijv. ‘Plan zaterdag 2 uur Engels leesvaardigheid’"></textarea><button class="btn primary" id="chatSend">Stuur</button><button class="btn ghost" id="chatStop" hidden>Stop</button></div>
+        <p class="small muted" id="chatNote" style="margin:6px 0 0"></p>
+      </div>
+      <div class="card">
+        <h3>Wat Claude in je agenda deed</h3>
+        <ul class="acts" id="calActs"><li class="muted" style="background:none;padding:0">Nog niets. Wijzigingen verschijnen hier, met een knop om ze terug te draaien.</li></ul>
+        <h3 style="margin-top:18px">Zelf een studieblok inplannen</h3>
+        <form class="planform" id="planForm">
+          <label class="f">Vak<select id="pfVak"></select></label>
+          <label class="f">Onderwerp<input type="text" id="pfWhat" placeholder="bijv. goniometrie"></label>
+          <label class="f">Datum<input type="date" id="pfDate"></label>
+          <label class="f">Begin<input type="time" id="pfStart" value="16:00"></label>
+          <label class="f">Duur<select id="pfDur"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>1 uur</option><option value="90">1,5 uur</option><option value="120">2 uur</option></select></label>
+          <button class="btn hl" type="submit">Zet in agenda</button>
+        </form>
+        <p class="small muted" id="pfMsg" style="margin:6px 0 0"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AFVINKEN -->
+  <section class="sec" id="p-taken" role="tabpanel" hidden>
+    <div class="card">
+      <h3>Nieuwe taak</h3>
+      <form class="addform" id="addForm">
+        <label class="f wide">Wat moet er gebeuren?<input type="text" id="afTitle" placeholder="bijv. Oud examen Engels 2024-I maken" required></label>
+        <label class="f">Vak<select id="afVak"></select></label>
+        <label class="f">Deadline<input type="date" id="afDue"></label>
+        <label class="f">Soort<select id="afKind"><option>Huiswerk</option><option>Leren</option><option>Toets</option><option>SE</option><option>PO</option><option>Oefenexamen</option><option>Overig</option></select></label>
+        <button class="btn primary" type="submit">Toevoegen</button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Takenlijst <small class="muted mono" id="taskCount"></small></h3><div class="chips" id="taskFilter"></div></div>
+      <div id="taskGroups"></div>
+    </div>
+    <div class="card">
+      <h3>Vakken en weekdoelen</h3>
+      <p class="small muted" style="margin:0 0 6px">Codes zijn de afkortingen in je rooster (zoals WB in ‘WB-5DV6D’). Daarmee herkent de planner lessen en toetsen in je agenda.</p>
+      <div id="vakSettings"></div>
+      <div class="row" style="margin-top:10px"><input type="text" id="newVak" placeholder="Vak toevoegen, bijv. Scheikunde"><button class="btn" id="addVak">Vak toevoegen</button></div>
+      <div class="row" style="margin-top:16px"><label class="f">Eerste CE-dag<input type="date" id="ceDate"></label><span class="small muted" style="align-self:end">Staat op een schatting. Zet hier de datum uit je examenrooster.</span></div>
+    </div>
+  </section>
+
+  <!-- TRAINERS -->
+  <section class="sec" id="p-trainers" role="tabpanel" hidden>
+    <div id="trainerHome" class="sec">
+      <div class="tgrid" id="trainerGrid"></div>
+      <div class="card">
+        <h3>Snelle check met Claude</h3>
+        <p class="small muted" style="margin:0 0 10px">Voor elk vak: kies een onderwerp en Claude maakt vijf meerkeuzevragen op 6-vwo-niveau. Na afloop telt het als sessie.</p>
+        <div class="row"><select id="qcVak"></select><input type="text" id="qcTopic" placeholder="Onderwerp, bijv. redoxreacties" style="flex:1;min-width:160px"><button class="btn primary" id="qcGo">Maak 5 vragen</button></div>
+        <div id="qcBox" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div id="engApp" class="sec" hidden></div>
+  </section>
+
+  <footer>
+    Je taken, sessies en instellingen worden in je account bewaard en zijn alleen voor jou zichtbaar. Agenda-acties gebruiken je eigen Google Calendar-koppeling. De oefenteksten Engels zijn in examenstijl geschreven en geen echte oude examens; die vind je met correctievoorschrift op <a href="https://www.examenblad.nl" target="_blank" rel="noopener">examenblad.nl</a>.
+  </footer>
+</div>
+
+<script>
+/* ================= basis ================= */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const parseYmd = s => { const [y, m, d] = String(s).split("-").map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const startOfDay = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const startOfWeek = d => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const localIso = d => ymd(d) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":00";
+const dayDiff = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / 864e5);
+const DAGEN = ["zo","ma","di","wo","do","vr","za"], DAGEN_LANG = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
+const MAANDEN = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+const fmtDay = d => DAGEN[d.getDay()] + " " + d.getDate() + " " + MAANDEN[d.getMonth()];
+const fmtTime = d => pad(d.getHours()) + ":" + pad(d.getMinutes());
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function isoWeek(d){ const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y) / 864e5 + 1) / 7); }
+function relDue(due){ const n = dayDiff(new Date(), parseYmd(due)); if (n === 0) return "vandaag"; if (n === 1) return "morgen"; if (n === -1) return "gisteren te laat"; if (n > 1) return n < 7 ? DAGEN_LANG[parseYmd(due).getDay()] + " (over " + n + " dagen)" : "over " + n + " dagen"; return (-n) + " dagen te laat"; }
+const lsGet = (k, f) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch (e) { return f; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+/* ================= vakken en opslag ================= */
+const DEFAULT_VAKKEN = [
+  {id:"wib", name:"Wiskunde B", codes:["WB","WISB","WISKUNDE B"], goal:3, color:"wib", link:"https://claude.ai/artifact/D2ba3PpuFfpGwpwQ5V6mMn", info:"Oefenen per domein, oude-examenopgaven, formules, uitleg en SE-voorbereiding."},
+  {id:"ned", name:"Nederlands", codes:["NE","NED","NEDERLANDS"], goal:2, color:"ned", link:"https://claude.ai/artifact/MYxez5KsHsf6U9C1D85t6W", info:"Literaire begrippen, leesvaardigheid CE en je documentatiemap over Bint."},
+  {id:"eng", name:"Engels", codes:["EN","ENG","ENGELS","ENGLISH"], goal:3, color:"eng", link:"", info:"Leesvaardigheid CE: vraagtypen, signaalwoorden, toon, oefenteksten en schrijfcheck."}
+];
+const EXTRA_COLORS = ["c1","c2","c3","c4"];
+const S = { tasks: [], log: [], settings: { ceDate: "2027-05-11", vakken: DEFAULT_VAKKEN.map(v => ({...v})) } };
+(function loadCache(){ const c = lsGet("sp-cache-v1", null); if (c){ S.tasks = c.tasks || []; S.log = c.log || []; if (c.settings) mergeSettings(c.settings); } })();
+function mergeSettings(d){
+  if (d.ceDate) S.settings.ceDate = d.ceDate;
+  if (Array.isArray(d.vakken) && d.vakken.length){
+    S.settings.vakken = d.vakken.map(v => { const base = DEFAULT_VAKKEN.find(x => x.id === v.id); return {...(base || {}), ...v, info: base ? base.info : (v.info || "")}; });
+  }
+}
+const cache = () => lsSet("sp-cache-v1", { tasks: S.tasks, log: S.log, settings: S.settings });
+const vakken = () => S.settings.vakken;
+const vakById = id => vakken().find(v => v.id === id);
+const vakChip = id => { const v = vakById(id); return v ? `<span class="vk v-${esc(v.color)}">${esc(v.name)}</span>` : `<span class="vk">Algemeen</span>`; };
+const clean = o => JSON.parse(JSON.stringify(o));
+
+let db = null, dbFirst = { tasks: false, log: false };
+const setSave = t => { $("#saveState").textContent = t; };
+setSave("opgeslagen op dit apparaat");
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
+  if (!db){ setSave("opgeslagen op dit apparaat (account-opslag niet beschikbaar)"); return; }
+  const onErr = e => setSave("account-opslag niet bereikbaar, wijzigingen blijven op dit apparaat");
+  db.collection("planner/main/tasks").onSnapshot(snap => {
+    const remote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!dbFirst.tasks){ dbFirst.tasks = true; const pend = S.tasks.filter(t => t._local && !remote.some(r => r.id === t.id)); pend.forEach(t => writeTask(t)); remote.push(...pend); }
+    S.tasks = remote; cache(); setSave("opgeslagen in je account"); renderAll();
+  }, onErr);
+  db.collection("planner/main/log").orderBy("at", "desc").limit(500).onSnapshot(snap => {
+    const remote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!dbFirst.log){ dbFirst.log = true; const pend = S.log.filter(l => l._local && !remote.some(r => r.id === l.id)); pend.forEach(l => writeLog(l)); remote.push(...pend); }
+    S.log = remote; cache(); renderAll();
+  }, onErr);
+  db.doc("planner/settings").onSnapshot(snap => { if (snap.exists){ mergeSettings(snap.data() || {}); cache(); renderAll(); renderSettings(); } }, onErr);
+})();
+async function writeTask(t){ if (!db) return; const { id, _local, ...data } = t; try { await db.doc("planner/main/tasks/" + id).set(clean(data)); } catch (e) { setSave("opslaan mislukt, probeer het opnieuw"); } }
+async function writeLog(l){ if (!db) return; const { id, _local, ...data } = l; try { await db.doc("planner/main/log/" + id).set(clean(data)); } catch (e) { setSave("opslaan mislukt, probeer het opnieuw"); } }
+function upsert(arr, item){ const i = arr.findIndex(x => x.id === item.id); if (i >= 0) arr[i] = item; else arr.push(item); }
+function saveTask(t){ if (!db) t._local = true; upsert(S.tasks, t); cache(); renderAll(); writeTask(t); return t; }
+function addTask({ title, vak = "", due = "", kind = "Huiswerk", source = "" }){
+  return saveTask({ id: uid(), title: String(title).slice(0, 200), vak, due: due || "", kind, source, done: false, created: Date.now() });
+}
+function toggleTask(id, done){ const t = S.tasks.find(x => x.id === id); if (!t) return; saveTask({ ...t, done, doneAt: done ? Date.now() : 0 }); }
+async function removeTask(id){ S.tasks = S.tasks.filter(t => t.id !== id); cache(); renderAll(); if (db){ try { await db.doc("planner/main/tasks/" + id).delete(); } catch (e) {} } }
+function addLog(vak, what){ const l = { id: uid(), vak, what: String(what).slice(0, 200), at: Date.now(), kind: "sessie" }; if (!db) l._local = true; S.log.unshift(l); cache(); renderAll(); writeLog(l); }
+let settingsTimer = null;
+function saveSettings(){ cache(); renderAll(); clearTimeout(settingsTimer); settingsTimer = setTimeout(async () => { if (!db) return; try { await db.doc("planner/settings").set(clean({ ceDate: S.settings.ceDate, vakken: S.settings.vakken.map(({ info, ...v }) => v) })); } catch (e) { setSave("instellingen opslaan mislukt"); } }, 700); }
+function sessionsThisWeek(vak){ const w0 = startOfWeek(new Date()).getTime(); return S.log.filter(l => l.vak === vak && l.kind === "sessie" && l.at >= w0).length; }
+
+/* ================= agenda (Google Calendar via mcp) ================= */
+const CAL = "Google Calendar";
+let mcp = null, mcpReady = false;
+const calState = { upcoming: null, upErr: null, week: null, weekErr: null, weekOffset: 0, loadingWeek: false };
+const TOETS_RE = /\b(toets|proefwerk|tentamen|examen|schoolexamen|inleveren|deadline|presentatie|mondeling|luistertoets|kijk- en luister)\b/i;
+const TOETS_CODE_RE = /\b(SO|SE|PO|PTA)\b/;
+const STUDY_RE = /\b(studie|studeren|studieblok|leren|oefenen|herhalen|huiswerk)\b/i;
+function detectVak(text){
+  const up = String(text || "").toUpperCase(); const tokens = up.split(/[^A-ZÀ-Ý0-9]+/).filter(Boolean);
+  for (const v of vakken()){
+    if (up.includes(v.name.toUpperCase())) return v.id;
+    for (const c of (v.codes || [])){ const cu = c.toUpperCase().trim(); if (!cu) continue; if (cu.includes(" ") ? up.includes(cu) : tokens.includes(cu)) return v.id; }
+  }
+  return "";
+}
+function normEvent(e){
+  const allDay = !e.start?.dateTime;
+  const start = e.start?.dateTime ? new Date(e.start.dateTime) : parseYmd(e.start?.date || ymd(new Date()));
+  const end = e.end?.dateTime ? new Date(e.end.dateTime) : (e.end?.date ? parseYmd(e.end.date) : start);
+  const title = e.summary || "(geen titel)"; const desc = e.description || "";
+  return { id: e.id, title, start, end, allDay, location: e.location || "", desc, link: e.htmlLink || "",
+    vak: detectVak(title + " " + (e.location || "")), toets: TOETS_RE.test(title) || TOETS_CODE_RE.test(title),
+    study: STUDY_RE.test(title) || desc.includes("Studieplanner") };
+}
+function calErrCopy(e){
+  switch (e?.code){
+    case "server_not_connected": case "server_not_found": return "Google Calendar is niet gekoppeld. Voeg het toe in claude.ai bij Instellingen → Connectors en laad de pagina opnieuw.";
+    case "needs_reauth": return "Je Google Calendar-koppeling is verlopen. Koppel opnieuw in claude.ai bij Instellingen → Connectors.";
+    case "selection_required": return "Je hebt meer dan één Google Calendar-koppeling. Kies er een in de melding van claude.ai.";
+    case "not_in_manifest": case "consent_required": return "Je hebt Google Calendar voor deze pagina niet toegestaan. Zet het aan via het menu Rechten van deze pagina.";
+    case "approval_required": return "Deze actie wacht op jouw goedkeuring. Tik nog een keer op de knop en kies Toestaan.";
+    case "blocked_by_policy": return "Je organisatie blokkeert deze agenda-actie.";
+    case "server_unavailable": case "rate_limited": return "Google Calendar reageert even niet. Probeer het over een minuut opnieuw.";
+    case "not_granted": case "capability_disabled": case "capability_removed": return "Agenda-toegang werkt niet in deze weergave. Open de planner op claude.ai.";
+    case "tool_error": return "Google Calendar weigerde dit: " + (e.message || "onbekende fout");
+    default: return "Agenda ophalen lukte niet" + (e?.message ? ": " + e.message : ".");
+  }
+}
+async function fetchEvents(from, to, opts = {}){
+  if (!mcp) throw { code: "not_granted" };
+  let out = [], token = null;
+  for (let page = 0; page < 3; page++){
+    const input = { startTime: localIso(from), endTime: localIso(to), orderBy: "startTime", pageSize: 250 };
+    if (token) input.pageToken = token;
+    const r = await mcp.callTool(CAL, "list_events", input, opts.refresh ? { cache: { refresh: true, staleTime: 60000 } } : { cache: { staleTime: 60000 } });
+    const p = r.payload || {};
+    out.push(...(p.events || []).filter(e => e.status !== "cancelled"));
+    token = p.nextPageToken; if (!token) break;
+  }
+  return out.map(normEvent).sort((a, b) => a.start - b.start);
+}
+async function loadUpcoming(refresh){
+  try { calState.upcoming = await fetchEvents(startOfDay(new Date()), addDays(startOfDay(new Date()), 15), { refresh }); calState.upErr = null; }
+  catch (e) { calState.upErr = e; if (["needs_reauth","server_not_connected","not_in_manifest","blocked_by_policy","consent_required"].includes(e?.code)) calState.upcoming = null; }
+  renderAll();
+}
+async function loadWeek(refresh){
+  calState.loadingWeek = true; renderAgenda();
+  const ws = addDays(startOfWeek(new Date()), 7 * calState.weekOffset);
+  try { calState.week = { ws, events: await fetchEvents(ws, addDays(ws, 7), { refresh }) }; calState.weekErr = null; }
+  catch (e) { calState.weekErr = e; calState.week = { ws, events: [] }; }
+  calState.loadingWeek = false; renderAgenda();
+}
+async function afterCalWrite(){ try { await mcp.invalidate(CAL, "list_events"); } catch (e) {} loadUpcoming(true); loadWeek(true); }
+const toCal = s => { s = String(s); return s.length === 16 ? s + ":00" : s; };
+async function createEvent({ titel, start, eind, beschrijving }){
+  const r = await mcp.callTool(CAL, "create_event", { summary: String(titel), startTime: toCal(start), endTime: toCal(eind), description: (beschrijving ? beschrijving + "\n\n" : "") + "Gepland via Studieplanner" });
+  const p = r.payload || {}; const id = p.id || p.event?.id || "";
+  pushAct({ kind: "create", id, text: `Ingepland: ${titel} · ${fmtDay(new Date(toCal(start)))} ${String(start).slice(11, 16)}` });
+  afterCalWrite(); return { id, ok: true };
+}
+async function updateEvent({ id, titel, start, eind }){
+  const input = { eventId: String(id) }; if (titel) input.summary = String(titel); if (start) input.startTime = toCal(start); if (eind) input.endTime = toCal(eind);
+  await mcp.callTool(CAL, "update_event", input);
+  pushAct({ kind: "update", id, text: `Gewijzigd: ${titel || "afspraak"}${start ? " → " + fmtDay(new Date(toCal(start))) + " " + String(start).slice(11, 16) : ""}` });
+  afterCalWrite(); return { ok: true };
+}
+async function deleteEvent(id){ await mcp.callTool(CAL, "delete_event", { eventId: String(id) }); afterCalWrite(); }
+(async () => {
+  try { mcp = await window.claude?.use?.("mcp"); } catch (e) { mcp = null; }
+  mcpReady = true;
+  if (!mcp){ calState.upErr = { code: "not_granted" }; calState.weekErr = { code: "not_granted" }; renderAll(); renderAgenda(); return; }
+  loadUpcoming(false); loadWeek(false);
+})();
+
+/* agenda-acties (log met ongedaan maken) */
+const acts = [];
+function pushAct(a){ acts.unshift({ ...a, key: uid() }); renderActs(); }
+function renderActs(){
+  const ul = $("#calActs");
+  if (!acts.length){ ul.innerHTML = `<li class="muted" style="background:none;padding:0">Nog niets. Wijzigingen verschijnen hier, met een knop om ze terug te draaien.</li>`; return; }
+  ul.innerHTML = acts.map(a => {
+    if (a.kind === "confirm") return `<li class="confirm"><span>Claude wil verwijderen: <b>${esc(a.title)}</b></span><span class="row"><button class="btn sm danger" data-del="${a.key}">Verwijder</button><button class="btn sm" data-keep="${a.key}">Laat staan</button></span></li>`;
+    return `<li><span>${esc(a.text)}</span>${a.kind === "create" && a.id && !a.undone ? `<button class="btn sm" data-undo="${a.key}">Ongedaan maken</button>` : a.undone ? `<span class="small muted">teruggedraaid</span>` : ""}</li>`;
+  }).join("");
+}
+$("#calActs").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const key = b.dataset.undo || b.dataset.del || b.dataset.keep; const a = acts.find(x => x.key === key); if (!a) return;
+  b.disabled = true;
+  try {
+    if (b.dataset.undo){ await deleteEvent(a.id); a.undone = true; }
+    else if (b.dataset.del){ await deleteEvent(a.id); a.kind = "done"; a.text = "Verwijderd: " + a.title; }
+    else { a.kind = "done"; a.text = "Niet verwijderd: " + a.title; }
+  } catch (err) { a.kind = "done"; a.text = calErrCopy(err); }
+  renderActs();
+});
+
+/* ================= check ================= */
+function computeCheck(){
+  const today = ymd(new Date()), in7 = ymd(addDays(new Date(), 7));
+  const open = S.tasks.filter(t => !t.done);
+  const byDue = (a, b) => (a.due || "9999").localeCompare(b.due || "9999");
+  const overdue = open.filter(t => t.due && t.due < today).sort(byDue);
+  const soon = open.filter(t => t.due && t.due >= today && t.due <= in7).sort(byDue);
+  const di = (new Date().getDay() + 6) % 7;
+  const goals = vakken().filter(v => v.goal > 0).map(v => { const n = sessionsThisWeek(v.id); const expected = Math.floor(v.goal * (di + 1) / 7); return { v, n, done: n >= v.goal, behind: n < expected }; });
+  const ev = calState.upcoming; const now = new Date();
+  const toetsen = ev ? ev.filter(e => e.toets && e.start >= startOfDay(now)) : [];
+  const toetsChecks = toetsen.map(e => {
+    const d = ymd(e.start);
+    const task = S.tasks.find(t => t.source === "cal:" + e.id) || S.tasks.find(t => t.due === d && (!e.vak || !t.vak || t.vak === e.vak) && /toets|se|po|examen|deadline|inleveren|presentatie|mondeling/i.test((t.kind || "") + " " + t.title));
+    const blocks = ev.filter(x => x.study && x.start < e.start && x.end > now && (!x.vak || !e.vak || x.vak === e.vak)).length;
+    return { e, task, blocks };
+  });
+  return { open, overdue, soon, goals, toetsChecks, today };
+}
+function renderVandaag(){
+  const c = computeCheck();
+  const issues = [];
+  c.overdue.forEach(t => issues.push({ lvl: "bad", text: `<b>${esc(t.title)}</b> · ${vakChip(t.vak)} · ${relDue(t.due)}`, act: `<button class="btn sm" data-done="${t.id}">Af</button>` }));
+  c.toetsChecks.forEach(({ e, task, blocks }) => {
+    const when = fmtDay(e.start) + (e.allDay ? "" : " " + fmtTime(e.start));
+    if (!task) issues.push({ lvl: "warn", text: `<b>${esc(e.title)}</b> (${when}) staat in je agenda maar niet in je takenlijst.`, act: `<button class="btn sm" data-mk="${esc(e.id)}">Maak taak</button>` });
+    if (!blocks && !(task && task.done)) issues.push({ lvl: "warn", text: `Nog geen studieblok gepland vóór <b>${esc(e.title)}</b> (${when}).`, act: `<button class="btn sm" data-plan="${esc(e.id)}">Plan met Claude</button>` });
+    else if (task && blocks) issues.push({ lvl: "ok", text: `${esc(e.title)} (${when}): taak staat erin, ${blocks} studieblok${blocks > 1 ? "ken" : ""} gepland.` });
+  });
+  c.goals.filter(g => g.behind).forEach(g => issues.push({ lvl: "warn", text: `${vakChip(g.v.id)} loopt achter op je weekdoel: ${g.n} van ${g.v.goal} sessies.`, act: `<button class="btn sm" data-train="${g.v.id}">Oefen nu</button>` }));
+  c.soon.forEach(t => issues.push({ lvl: "info", text: `<b>${esc(t.title)}</b> · ${vakChip(t.vak)} · ${relDue(t.due)}`, act: `<button class="btn sm" data-done="${t.id}">Af</button>` }));
+  const bad = c.overdue.length, warn = issues.filter(i => i.lvl === "warn").length;
+  const v = $("#verdict");
+  const calTxt = calState.upcoming ? "" : calState.upErr ? " De agenda kon niet worden meegenomen." : " De agenda wordt nog geladen.";
+  if (bad){ v.className = "verdict bad"; v.innerHTML = `<div class="dot">${bad}</div><div><h2>Je hebt ${bad} ${bad === 1 ? "taak" : "taken"} te laat</h2><p>Werk die eerst weg.${warn ? " Daarnaast nog " + warn + " aandachtspunt" + (warn > 1 ? "en" : "") + "." : ""}${calTxt}</p></div>`; }
+  else if (warn){ v.className = "verdict warn"; v.innerHTML = `<div class="dot">${warn}</div><div><h2>Bijna alles op schema</h2><p>Niets te laat, wel ${warn} punt${warn > 1 ? "en" : ""} om te regelen.${calTxt}</p></div>`; }
+  else { v.className = "verdict ok"; v.innerHTML = `<div class="dot">✓</div><div><h2>Je hebt alles af wat nu af moet</h2><p>Geen taken te laat en je weekdoelen lopen op schema.${calTxt}</p></div>`; }
+  const ICON = { bad: "!", warn: "•", ok: "✓", info: "→" };
+  $("#checkList").innerHTML = issues.length ? issues.map(i => `<li class="${i.lvl}"><span class="ic">${ICON[i.lvl]}</span><span>${i.text}</span>${i.act || "<span></span>"}</li>`).join("") : `<li class="ok"><span class="ic">✓</span><span>Niets open voor de komende week. Kijk bij Trainers wat je kunt oefenen.</span><span></span></li>`;
+  $("#checkStamp").textContent = c.open.length + " open";
+  // weekdoelen
+  const ws = startOfWeek(new Date());
+  $("#weekLabel").textContent = "week " + isoWeek(new Date()) + " · " + ws.getDate() + " " + MAANDEN[ws.getMonth()] + " – " + addDays(ws, 6).getDate() + " " + MAANDEN[addDays(ws, 6).getMonth()];
+  $("#goalList").innerHTML = c.goals.length ? c.goals.map(g => `<div class="goal v-${esc(g.v.color)}"><span>${vakChip(g.v.id)}</span><span class="row"><span class="gn ${g.done ? "done" : g.behind ? "behind" : ""}">${g.n}/${g.v.goal}${g.done ? " ✓" : ""}</span><button class="btn sm" data-plus="${g.v.id}" aria-label="Sessie ${esc(g.v.name)} toevoegen">+1</button></span><div class="bar">${Array.from({ length: Math.max(g.v.goal, g.n) }, (_, i) => `<i class="${i < g.n ? "on" : ""}"></i>`).join("")}</div></div>`).join("") : `<p class="empty">Geen weekdoelen ingesteld. Zet ze bij Afvinken → Vakken.</p>`;
+  // vandaag
+  const te = $("#todayEvents");
+  if (calState.upcoming){
+    const evs = calState.upcoming.filter(e => ymd(e.start) === c.today || (e.allDay && e.start <= new Date() && e.end > new Date()));
+    $("#todayStamp").textContent = fmtDay(new Date());
+    te.innerHTML = evs.length ? `<div class="evs">${evs.map(evRow).join("")}</div>` : `<p class="empty">Niets in je agenda vandaag. Goed moment voor een studieblok.</p>`;
+  } else te.innerHTML = calState.upErr ? `<div class="notice bad">${esc(calErrCopy(calState.upErr))}</div>` : `<p class="empty">Agenda laden…</p>`;
+  // eerstvolgende
+  const nxt = c.open.slice().sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999")).slice(0, 5);
+  $("#nextTasks").innerHTML = nxt.length ? nxt.map(taskRow).join("") : `<li class="empty">Geen open taken. Voeg ze toe bij Afvinken.</li>`;
+}
+function evRow(e){
+  const v = e.vak ? vakById(e.vak) : null;
+  const time = e.allDay ? "hele dag" : fmtTime(e.start) + "–" + fmtTime(e.end);
+  return `<div class="ev ${e.toets ? "toets" : ""} ${v ? "v-" + esc(v.color) : ""}"><span class="et">${time}</span><span><span class="en">${e.link ? `<a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(e.title)}</a>` : esc(e.title)}</span>${e.location ? `<span class="eloc"> · ${esc(e.location)}</span>` : ""}</span><span class="row">${e.toets ? `<span class="pill toets">toets</span>` : e.study ? `<span class="pill study">studie</span>` : ""}${e.toets && !S.tasks.some(t => t.source === "cal:" + e.id) ? `<button class="btn sm" data-mk="${esc(e.id)}">Taak</button>` : ""}</span></div>`;
+}
+function findEvent(id){ return (calState.upcoming || []).concat(calState.week?.events || []).find(e => e.id === id); }
+function taskFromEvent(id){
+  const e = findEvent(id); if (!e) return;
+  if (S.tasks.some(t => t.source === "cal:" + e.id)) return;
+  addTask({ title: e.title, vak: e.vak, due: ymd(e.start), kind: /inleveren|deadline/i.test(e.title) ? "Overig" : /\bPO\b/.test(e.title) ? "PO" : /\bSE\b/.test(e.title) ? "SE" : "Toets", source: "cal:" + e.id });
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.done){ toggleTask(b.dataset.done, true); }
+  else if (b.dataset.mk){ taskFromEvent(b.dataset.mk); b.disabled = true; b.textContent = "Toegevoegd"; }
+  else if (b.dataset.plus){ addLog(b.dataset.plus, "Sessie (handmatig)"); }
+  else if (b.dataset.train){ const v = vakById(b.dataset.train); setTab("trainers"); if (v?.id === "eng") openEng(); else if (v?.link) window.open(v.link, "_blank", "noopener"); }
+  else if (b.dataset.plan){ const ev = findEvent(b.dataset.plan); if (!ev) return; setTab("agenda"); sendChat(`Plan herhaalblokken voor "${ev.title}" op ${fmtDay(ev.start)}. Kijk eerst in mijn agenda wanneer ik vrij ben in de dagen ervoor, en zet daarna ook een taak voor deze toets in mijn takenlijst.`); }
+});
+
+/* ================= taken ================= */
+let taskFilter = "alle";
+function taskRow(t){
+  const late = !t.done && t.due && t.due < ymd(new Date()); const soon = !t.done && t.due && !late && dayDiff(new Date(), parseYmd(t.due)) <= 2;
+  return `<li class="task ${t.done ? "done" : ""}"><input type="checkbox" ${t.done ? "checked" : ""} data-tg="${t.id}" aria-label="${esc(t.title)} afvinken"><div><div class="tt">${esc(t.title)}</div><div class="tm">${vakChip(t.vak)}<span>${esc(t.kind || "")}</span>${t.due ? `<span class="${late ? "pill late" : soon ? "pill soon" : ""}">${t.done ? fmtDay(parseYmd(t.due)) : relDue(t.due)}</span>` : ""}${t.source?.startsWith("cal:") ? `<span>uit agenda</span>` : ""}</div></div><button class="x" data-rm="${t.id}" aria-label="Verwijder ${esc(t.title)}">×</button></li>`;
+}
+document.addEventListener("change", e => { const t = e.target; if (t.dataset?.tg) toggleTask(t.dataset.tg, t.checked); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("button.x"); if (!b) return;
+  if (b.classList.contains("sure")) removeTask(b.dataset.rm);
+  else { b.classList.add("sure"); b.textContent = "Zeker? Tik nog eens"; setTimeout(() => { if (b.isConnected){ b.classList.remove("sure"); b.textContent = "×"; } }, 3500); }
+});
+function renderTaken(){
+  const today = ymd(new Date()), in7 = ymd(addDays(new Date(), 7));
+  const list = S.tasks.filter(t => taskFilter === "alle" || (t.vak || "") === taskFilter);
+  const open = list.filter(t => !t.done).sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999") || (a.created || 0) - (b.created || 0));
+  const groups = [
+    ["Te laat", open.filter(t => t.due && t.due < today), "bad"],
+    ["Komende 7 dagen", open.filter(t => t.due && t.due >= today && t.due <= in7)],
+    ["Later", open.filter(t => t.due && t.due > in7)],
+    ["Zonder deadline", open.filter(t => !t.due)],
+    ["Klaar", list.filter(t => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 15)]
+  ];
+  $("#taskCount").textContent = `${S.tasks.filter(t => t.done).length} van ${S.tasks.length} af`;
+  $("#taskGroups").innerHTML = groups.filter(g => g[1].length).map(g => `<div class="grouph ${g[2] || ""}">${g[0]} · ${g[1].length}</div><ul class="tasks">${g[1].map(taskRow).join("")}</ul>`).join("") || `<p class="empty">Nog geen taken${taskFilter !== "alle" ? " voor dit vak" : ""}. Voeg er hierboven een toe, of laat Claude je toetsen uit je agenda overnemen.</p>`;
+  const opts = [["alle", "Alle"], ...vakken().map(v => [v.id, v.name]), ["", "Algemeen"]];
+  $("#taskFilter").innerHTML = opts.map(([id, n]) => `<button class="chip" data-tf="${esc(id)}" aria-pressed="${taskFilter === id}">${esc(n)}</button>`).join("");
+  const late = S.tasks.filter(t => !t.done && t.due && t.due < today).length; const bdg = $("#lateBadge"); bdg.hidden = !late; bdg.textContent = late;
+}
+$("#taskFilter").addEventListener("click", e => { const b = e.target.closest("[data-tf]"); if (!b) return; taskFilter = b.dataset.tf; renderTaken(); });
+$("#addForm").addEventListener("submit", e => { e.preventDefault(); const title = $("#afTitle").value.trim(); if (!title) return; addTask({ title, vak: $("#afVak").value, due: $("#afDue").value, kind: $("#afKind").value }); $("#afTitle").value = ""; $("#afDue").value = ""; $("#afTitle").focus(); });
+function fillVakSelects(){
+  const opts = vakken().map(v => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join("");
+  [["#afVak", true], ["#pfVak", false], ["#qcVak", false]].forEach(([s, alg]) => { const el = $(s); const cur = el.value; el.innerHTML = opts + (alg ? `<option value="">Algemeen</option>` : ""); if ([...el.options].some(o => o.value === cur)) el.value = cur; });
+}
+function renderSettings(){
+  $("#ceDate").value = S.settings.ceDate;
+  $("#vakSettings").innerHTML = vakken().map(v => `<div class="vakrow" data-vid="${esc(v.id)}"><label class="f">Vak<input type="text" data-k="name" value="${esc(v.name)}"></label><label class="f">Codes in rooster<input type="text" data-k="codes" value="${esc((v.codes || []).join(", "))}"></label><label class="f">Sessies/week<input type="number" min="0" max="14" data-k="goal" value="${v.goal}"></label><label class="f wide">Link naar trainer${v.id === "eng" ? " (ingebouwd)" : ""}<input type="text" data-k="link" value="${esc(v.link || "")}" ${v.id === "eng" ? "disabled" : ""} placeholder="https://claude.ai/artifact/…"></label>${DEFAULT_VAKKEN.some(d => d.id === v.id) ? "<span></span>" : `<button class="btn sm danger" data-rmvak="${esc(v.id)}">Verwijder</button>`}</div>`).join("");
+}
+$("#vakSettings").addEventListener("change", e => {
+  const inp = e.target, row = inp.closest("[data-vid]"); if (!row) return; const v = vakById(row.dataset.vid); if (!v) return;
+  const k = inp.dataset.k;
+  if (k === "codes") v.codes = inp.value.split(",").map(s => s.trim()).filter(Boolean);
+  else if (k === "goal") v.goal = Math.max(0, Math.min(14, parseInt(inp.value, 10) || 0));
+  else if (k === "name") v.name = inp.value.trim() || v.name;
+  else if (k === "link") v.link = /^https:\/\//.test(inp.value.trim()) ? inp.value.trim() : "";
+  saveSettings(); fillVakSelects(); renderTrainers();
+});
+$("#vakSettings").addEventListener("click", e => { const b = e.target.closest("[data-rmvak]"); if (!b) return; S.settings.vakken = vakken().filter(v => v.id !== b.dataset.rmvak); saveSettings(); renderSettings(); fillVakSelects(); });
+$("#addVak").onclick = () => { const n = $("#newVak").value.trim(); if (!n) return; const used = vakken().map(v => v.color); const color = EXTRA_COLORS.find(c => !used.includes(c)) || EXTRA_COLORS[vakken().length % 4]; vakken().push({ id: "v" + uid().slice(-6), name: n, codes: [], goal: 2, color, link: "", info: "" }); $("#newVak").value = ""; saveSettings(); renderSettings(); fillVakSelects(); };
+$("#ceDate").onchange = e => { if (e.target.value){ S.settings.ceDate = e.target.value; saveSettings(); } };
+
+/* ================= agenda-weergave ================= */
+function renderAgenda(){
+  const ws = addDays(startOfWeek(new Date()), 7 * calState.weekOffset);
+  $("#wkLabel").textContent = `Week ${isoWeek(ws)} · ${ws.getDate()} ${MAANDEN[ws.getMonth()]} – ${addDays(ws, 6).getDate()} ${MAANDEN[addDays(ws, 6).getMonth()]}`;
+  const n = $("#calNotice");
+  n.innerHTML = calState.weekErr ? `<div class="notice bad">${esc(calErrCopy(calState.weekErr))}</div>` : (calState.loadingWeek ? `<p class="empty">Agenda ophalen…</p>` : "");
+  const evs = calState.week && +calState.week.ws === +ws ? calState.week.events : [];
+  const today = ymd(new Date());
+  $("#weekDays").innerHTML = Array.from({ length: 7 }, (_, i) => {
+    const d = addDays(ws, i), k = ymd(d);
+    const de = evs.filter(e => e.allDay ? (k >= ymd(e.start) && k < ymd(e.end)) : ymd(e.start) === k);
+    return `<div class="day ${k === today ? "today" : ""}"><div class="dl">${DAGEN[d.getDay()]} <b>${d.getDate()}</b> ${MAANDEN[d.getMonth()]}</div><div class="evs">${de.length ? de.map(evRow).join("") : `<span class="empty small">${calState.loadingWeek || !mcpReady ? "" : "vrij"}</span>`}</div></div>`;
+  }).join("");
+}
+$("#wkPrev").onclick = () => { calState.weekOffset--; loadWeek(false); };
+$("#wkNext").onclick = () => { calState.weekOffset++; loadWeek(false); };
+$("#wkToday").onclick = () => { calState.weekOffset = 0; loadWeek(false); };
+$("#wkRefresh").onclick = () => { loadWeek(true); loadUpcoming(true); };
+$("#pfDate").value = ymd(new Date());
+$("#planForm").addEventListener("submit", async e => {
+  e.preventDefault(); const msg = $("#pfMsg");
+  if (!mcp){ msg.textContent = calErrCopy({ code: "not_granted" }); return; }
+  const v = vakById($("#pfVak").value); const what = $("#pfWhat").value.trim();
+  const [h, m] = $("#pfStart").value.split(":").map(Number); const s = parseYmd($("#pfDate").value); s.setHours(h || 16, m || 0, 0, 0);
+  const en = new Date(s.getTime() + parseInt($("#pfDur").value, 10) * 60000);
+  const btn = e.submitter; if (btn) btn.disabled = true; msg.textContent = "Bezig…";
+  try { await createEvent({ titel: `Studie: ${v ? v.name : "Algemeen"}${what ? " – " + what : ""}`, start: localIso(s), eind: localIso(en) }); msg.textContent = "Staat in je agenda."; $("#pfWhat").value = ""; }
+  catch (err) { msg.textContent = calErrCopy(err); }
+  if (btn) btn.disabled = false;
+});
+
+/* ================= Claude ================= */
+let sample = null, sampleTools = false;
+(async () => {
+  try { sample = await window.claude?.use?.("sample"); } catch (e) { sample = null; }
+  if (sample){ try { const l = await sample.limits(); sampleTools = !!l?.tools; } catch (e) { sampleTools = false; } }
+  updateClaudeUi();
+})();
+function sampleErrCopy(e){
+  switch (e?.code){
+    case "not_granted": case "sampling_disabled": case "not_declared": case "capability_disabled": case "capability_removed": return "Claude is niet beschikbaar op deze pagina. Je kunt het toestaan via het menu Rechten van de pagina.";
+    case "rate_limited": return "Je hebt Claude net vaak gebruikt. Wacht even en probeer het dan opnieuw.";
+    case "session_expired": return "Log opnieuw in op claude.ai en probeer het nog eens.";
+    case "refused": return "Claude wilde hier niet op antwoorden. Formuleer je vraag anders.";
+    case "prompt_too_large": return "Dat is te veel tekst in één keer. Maak het korter.";
+    case "invalid_json": return "Het antwoord kwam in een onverwachte vorm terug. Probeer het nog eens.";
+    case "cancelled": return "";
+    default: return "Er ging iets mis bij Claude. Probeer het opnieuw.";
+  }
+}
+function updateClaudeUi(){
+  const off = !sample;
+  ["#chatSend", "#claudeCheck", "#qcGo"].forEach(s => { const b = $(s); if (b) b.disabled = off; });
+  $("#chatNote").textContent = off ? "Claude is niet beschikbaar in deze weergave. Open de planner op claude.ai." : (!sampleTools ? "In deze weergave kan Claude je agenda alleen lezen via wat de planner meestuurt, niet zelf wijzigen." : "");
+}
+function weekdayStr(){ const d = new Date(); return `${DAGEN_LANG[d.getDay()]} ${d.getDate()} ${["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"][d.getMonth()]} ${d.getFullYear()}, ${fmtTime(d)}`; }
+function contextText(){
+  const v = vakken().map(x => `${x.name} (id ${x.id}, codes ${(x.codes || []).join("/") || "-"}, weekdoel ${x.goal} sessies, deze week ${sessionsThisWeek(x.id)})`).join("; ");
+  const open = S.tasks.filter(t => !t.done).slice(0, 40).map(t => `- [${t.id}] ${t.title} | vak ${vakById(t.vak)?.name || "algemeen"} | ${t.kind || ""} | deadline ${t.due || "geen"}`).join("\n");
+  return `Vandaag is het ${weekdayStr()} (tijdzone Europe/Amsterdam). Thomas zit in 6 vwo en doet dit schooljaar eindexamen; het eerste CE is op ${S.settings.ceDate}.\nVakken: ${v}.\nOpen taken:\n${open || "(geen)"}`;
+}
+const RULES = () => `Je bent de studieplanner-assistent van Thomas. Antwoord in het Nederlands, kort en concreet, zonder opsmuk.
+${contextText()}
+Regels:
+- Lees altijd eerst de agenda (agenda_lezen) voordat je iets inplant of iets over zijn dag zegt.
+- Plan nooit over bestaande afspraken of lessen heen. Plan op schooldagen niet voor 15:30 tenzij de agenda vrij is, en nooit na 22:00. Houd reistijd-afspraken vrij.
+- Studieblokken heten "Studie: <vak> – <onderwerp>" en duren meestal 45 tot 90 minuten.
+- Verwijderen gaat alleen via afspraak_verwijderen; Thomas bevestigt dat zelf in het paneel.
+- Toetsen, SE's, PO's en deadlines uit de agenda horen ook in de takenlijst (taak_toevoegen, met de datum als deadline).
+- Sluit af met een korte opsomming van wat je hebt gedaan.`;
+const TOOLS = [
+  { name: "agenda_lezen", description: "Leest afspraken uit Thomas' Google Calendar tussen twee datums (inclusief van, exclusief tot). Geeft een lijst met id, titel, start, eind, locatie, vak en of het een toets is.", inputSchema: { type: "object", properties: { van: { type: "string", description: "YYYY-MM-DD" }, tot: { type: "string", description: "YYYY-MM-DD" } }, required: ["van", "tot"] },
+    async execute(i){ const from = parseYmd(String(i.van)), to = parseYmd(String(i.tot)); if (isNaN(from) || isNaN(to)) throw new Error("Gebruik datums als YYYY-MM-DD"); addToolMsg(`agenda lezen ${i.van} → ${i.tot}`); const evs = await fetchEvents(from, to > from ? to : addDays(from, 1)).catch(e => { throw new Error(calErrCopy(e)); }); return evs.slice(0, 120).map(e => ({ id: e.id, titel: e.title, start: e.allDay ? ymd(e.start) : localIso(e.start).slice(0, 16), eind: e.allDay ? ymd(e.end) : localIso(e.end).slice(0, 16), heleDag: e.allDay, locatie: e.location || undefined, vak: vakById(e.vak)?.name, toets: e.toets || undefined, studieblok: e.study || undefined })); } },
+  { name: "afspraak_maken", description: "Zet een nieuwe afspraak (bijv. een studieblok) in de agenda. Tijden als YYYY-MM-DDTHH:MM, lokale tijd. Geeft het id terug.", inputSchema: { type: "object", properties: { titel: { type: "string" }, start: { type: "string" }, eind: { type: "string" }, beschrijving: { type: "string" } }, required: ["titel", "start", "eind"] },
+    async execute(i){ addToolMsg(`inplannen: ${i.titel}`); try { return await createEvent({ titel: String(i.titel), start: String(i.start), eind: String(i.eind), beschrijving: i.beschrijving ? String(i.beschrijving) : "" }); } catch (e) { throw new Error(calErrCopy(e)); } } },
+  { name: "afspraak_wijzigen", description: "Verschuift of hernoemt een bestaande afspraak. Geef het id uit agenda_lezen en alleen de velden die veranderen. Tijden als YYYY-MM-DDTHH:MM.", inputSchema: { type: "object", properties: { id: { type: "string" }, titel: { type: "string" }, start: { type: "string" }, eind: { type: "string" } }, required: ["id"] },
+    async execute(i){ addToolMsg(`wijzigen: ${i.titel || i.id}`); try { return await updateEvent({ id: String(i.id), titel: i.titel ? String(i.titel) : "", start: i.start ? String(i.start) : "", eind: i.eind ? String(i.eind) : "" }); } catch (e) { throw new Error(calErrCopy(e)); } } },
+  { name: "afspraak_verwijderen", description: "Vraagt Thomas om een afspraak te verwijderen. Er wordt niets verwijderd tot hij in het paneel bevestigt. Geef id en titel.", inputSchema: { type: "object", properties: { id: { type: "string" }, titel: { type: "string" } }, required: ["id", "titel"] },
+    async execute(i){ pushAct({ kind: "confirm", id: String(i.id), title: String(i.titel || "afspraak") }); addToolMsg(`verwijderen voorgesteld: ${i.titel}`); return "Voorgelegd aan Thomas; hij bevestigt zelf in het paneel."; } },
+  { name: "taak_toevoegen", description: "Voegt een taak toe aan de takenlijst. vak is een vak-id uit de context of leeg. deadline als YYYY-MM-DD of leeg. soort: Huiswerk, Leren, Toets, SE, PO, Oefenexamen of Overig.", inputSchema: { type: "object", properties: { titel: { type: "string" }, vak: { type: "string" }, deadline: { type: "string" }, soort: { type: "string" }, agenda_id: { type: "string", description: "id van de agenda-afspraak als de taak daaruit komt" } }, required: ["titel"] },
+    async execute(i){ if (i.agenda_id && S.tasks.some(t => t.source === "cal:" + i.agenda_id)) return "Staat al in de takenlijst."; const vak = vakById(String(i.vak || "")) ? String(i.vak) : (detectVak(String(i.vak || "")) || ""); const t = addTask({ title: String(i.titel), vak, due: /^\d{4}-\d{2}-\d{2}$/.test(String(i.deadline || "")) ? String(i.deadline) : "", kind: String(i.soort || "Huiswerk"), source: i.agenda_id ? "cal:" + i.agenda_id : "claude" }); addToolMsg(`taak toegevoegd: ${t.title}`); return { id: t.id }; } },
+  { name: "taak_afvinken", description: "Vinkt een taak af op id.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+    async execute(i){ const t = S.tasks.find(x => x.id === String(i.id)); if (!t) throw new Error("Taak niet gevonden"); toggleTask(t.id, true); addToolMsg(`afgevinkt: ${t.title}`); return "Afgevinkt."; } }
+];
+let turns = [], chatCtl = null;
+const chatEl = $("#chat");
+function addMsg(role, text){ const d = document.createElement("div"); d.className = "msg " + (role === "user" ? "u" : "c"); d.innerHTML = `<span class="who">${role === "user" ? "Jij" : "Claude"}</span>`; const s = document.createElement("span"); s.textContent = text; d.append(s); chatEl.append(d); chatEl.scrollTop = chatEl.scrollHeight; return s; }
+function addToolMsg(t){ const d = document.createElement("div"); d.className = "msg tool"; d.textContent = "↳ " + t; chatEl.append(d); chatEl.scrollTop = chatEl.scrollHeight; }
+async function sendChat(text){
+  text = String(text || "").trim(); if (!text || !sample || chatCtl) return;
+  addMsg("user", text); turns.push({ role: "user", content: text });
+  const out = addMsg("claude", "Even denken…");
+  chatCtl = new AbortController(); $("#chatSend").disabled = true; $("#chatStop").hidden = false;
+  let ctx = RULES();
+  if (!sampleTools){
+    const evs = calState.upcoming ? calState.upcoming.map(e => `- ${e.allDay ? ymd(e.start) + " hele dag" : localIso(e.start).slice(0, 16) + "–" + fmtTime(e.end)} ${e.title}${e.location ? " (" + e.location + ")" : ""}`).join("\n") : "(agenda niet beschikbaar)";
+    ctx += `\n\nJe kunt in deze weergave de agenda niet zelf wijzigen; geef een voorstel dat Thomas zelf invoert. Agenda komende 14 dagen:\n${evs}`;
+  }
+  try {
+    const r = await sample([{ role: "user", content: ctx }, ...turns.slice(-12)], { signal: chatCtl.signal, cache: false, ...(sampleTools ? { tools: TOOLS } : {}), onText: ({ text }) => { out.textContent = text; chatEl.scrollTop = chatEl.scrollHeight; } });
+    out.textContent = r.text; turns.push({ role: "assistant", content: r.text });
+  } catch (e) {
+    out.textContent = (e.text ? e.text + "\n\n" : "") + (sampleErrCopy(e) || "Gestopt.");
+    if (e.text) turns.push({ role: "assistant", content: e.text });
+    if (["not_granted", "sampling_disabled"].includes(e.code)){ sample = null; updateClaudeUi(); }
+  }
+  chatCtl = null; $("#chatSend").disabled = !sample; $("#chatStop").hidden = true;
+}
+$("#chatSend").onclick = () => { const t = $("#chatIn").value; $("#chatIn").value = ""; sendChat(t); };
+$("#chatIn").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); $("#chatSend").click(); } });
+$("#chatStop").onclick = () => chatCtl?.abort();
+$("#chatChips").addEventListener("click", e => { const b = e.target.closest("[data-q]"); if (b) sendChat(b.dataset.q); });
+
+/* Claude-check */
+let checkCtl = null;
+$("#claudeCheckStop").onclick = () => checkCtl?.abort();
+$("#claudeCheck").onclick = async () => {
+  if (!sample || checkCtl) return;
+  const out = $("#claudeCheckOut"); out.innerHTML = `<p class="empty">Claude kijkt alles na…</p>`;
+  checkCtl = new AbortController(); $("#claudeCheck").disabled = true; $("#claudeCheckStop").hidden = false;
+  const c = computeCheck();
+  const evs = calState.upcoming ? calState.upcoming.map(e => `- ${e.allDay ? ymd(e.start) + " hele dag" : localIso(e.start).slice(0, 16) + "–" + fmtTime(e.end)} ${e.title}${e.toets ? " [TOETS]" : ""}${e.study ? " [studieblok]" : ""}`).join("\n") : "(agenda niet beschikbaar)";
+  const prompt = `${contextText()}\n\nTaken die te laat zijn: ${c.overdue.map(t => t.title).join("; ") || "geen"}.\nSessies deze week: ${c.goals.map(g => `${g.v.name} ${g.n}/${g.v.goal}`).join(", ")}.\nRecent geoefend: ${S.log.slice(0, 15).map(l => `${vakById(l.vak)?.name || l.vak}: ${l.what} (${fmtDay(new Date(l.at))})`).join("; ") || "niets gelogd"}.\nAgenda komende 14 dagen:\n${evs}\n\nControleer of Thomas alles af heeft en op schema ligt voor zijn toetsen en het examen. Antwoord met alleen JSON in deze vorm:\n{"oordeel":"één zin","punten":[{"status":"ok"|"let_op"|"te_laat","tekst":"korte zin"}],"voorstellen":[{"titel":"Studie: <vak> – <onderwerp>","start":"YYYY-MM-DDTHH:MM","eind":"YYYY-MM-DDTHH:MM","waarom":"korte reden"}]}\nMaximaal 6 punten en 4 voorstellen. Voorstellen alleen op vrije momenten volgens de agenda, tussen 15:30 en 22:00 op schooldagen of overdag in het weekend, binnen de komende 7 dagen.`;
+  try {
+    const r = await sample.json(prompt, { signal: checkCtl.signal, cache: false });
+    const pts = Array.isArray(r?.punten) ? r.punten : [], vs = Array.isArray(r?.voorstellen) ? r.voorstellen.filter(v => v && v.titel && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v.start) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v.eind)) : [];
+    const cls = { ok: "ok", let_op: "warn", te_laat: "bad" }, ic = { ok: "✓", let_op: "•", te_laat: "!" };
+    out.innerHTML = `<p style="margin:0 0 10px;font-weight:700">${esc(r?.oordeel || "")}</p><ul class="checks">${pts.map(p => `<li class="${cls[p.status] || "warn"}"><span class="ic">${ic[p.status] || "•"}</span><span>${esc(p.tekst)}</span><span></span></li>`).join("")}</ul>${vs.length ? `<h3 style="margin:14px 0 6px">Voorgestelde studieblokken</h3><ul class="acts">${vs.map((v, i) => `<li><span><b>${esc(v.titel)}</b> · ${fmtDay(new Date(toCal(v.start)))} ${esc(v.start.slice(11, 16))}–${esc(v.eind.slice(11, 16))}<br><span class="small muted">${esc(v.waarom || "")}</span></span><button class="btn sm hl" data-sugg="${i}">Zet in agenda</button></li>`).join("")}</ul>` : ""}`;
+    out.onclick = async e => { const b = e.target.closest("[data-sugg]"); if (!b) return; const v = vs[+b.dataset.sugg]; if (!mcp){ b.replaceWith(Object.assign(document.createElement("span"), { className: "small", textContent: calErrCopy({ code: "not_granted" }) })); return; } b.disabled = true; try { await createEvent({ titel: v.titel, start: v.start, eind: v.eind, beschrijving: v.waarom || "" }); b.textContent = "Ingepland"; } catch (err) { b.disabled = false; b.textContent = "Opnieuw"; b.title = calErrCopy(err); } };
+  } catch (e) { const m = sampleErrCopy(e); out.innerHTML = m ? `<div class="notice bad">${esc(m)}</div>` : ""; if (["not_granted", "sampling_disabled"].includes(e.code)){ sample = null; updateClaudeUi(); } }
+  checkCtl = null; $("#claudeCheck").disabled = !sample; $("#claudeCheckStop").hidden = true;
+};
+
+/* ================= trainers ================= */
+function renderTrainers(){
+  $("#trainerGrid").innerHTML = vakken().map(v => {
+    const n = sessionsThisWeek(v.id);
+    const open = v.id === "eng" ? `<button class="btn primary" data-openeng>Open trainer</button>` : v.link ? `<a class="btn primary" href="${esc(v.link)}" target="_blank" rel="noopener" style="text-decoration:none">Open trainer ↗</a>` : `<button class="btn primary" data-qc="${esc(v.id)}">Oefen met Claude</button>`;
+    return `<div class="card tcard v-${esc(v.color)}"><span class="vk v-${esc(v.color)}">${n}/${v.goal} sessies deze week</span><h3>${esc(v.name)}</h3><p>${esc(v.info || (v.link ? "Je eigen trainer." : "Nog geen eigen trainer. Oefen met Claude, of zet een trainerlink bij Afvinken → Vakken."))}</p><div class="row">${open}${v.id !== "eng" ? `<button class="btn" data-plus="${esc(v.id)}">+1 sessie</button>` : ""}</div></div>`;
+  }).join("");
+}
+$("#trainerGrid").addEventListener("click", e => {
+  if (e.target.closest("[data-openeng]")) openEng();
+  const q = e.target.closest("[data-qc]"); if (q){ $("#qcVak").value = q.dataset.qc; $("#qcTopic").focus(); }
+});
+
+/* generieke quiz */
+function quiz(box, items, title, onDone){
+  let i = 0, score = 0, picked = null, logged = false;
+  const order = shuffle(items).map(it => ({ ...it, sh: shuffle(it.opts.map((t, k) => ({ t, ok: k === it.a }))) }));
+  function draw(){
+    if (i >= order.length){
+      box.innerHTML = `<div class="qbox"><p class="qmeta">${esc(title)} · klaar</p><p class="big">${score} / ${order.length}</p><p class="muted" style="margin:0">${score === order.length ? "Alles goed." : score >= order.length * .7 ? "Goed bezig. Lees de uitleg bij je fouten nog eens." : "Herhaal deze ronde nog een keer; de vragen komen in een andere volgorde."}</p><div class="row"><button class="btn primary" data-again>Nog een ronde</button></div></div>`;
+      if (!logged && onDone){ logged = true; onDone(score, order.length); }
+      box.querySelector("[data-again]").onclick = () => quiz(box, items, title, onDone); return;
+    }
+    const it = order[i];
+    box.innerHTML = `<div class="qbox"><p class="qmeta">${esc(title)} · vraag ${i + 1} van ${order.length} · score ${score}</p><p class="qq">${esc(it.q)}</p><div class="opts">${it.sh.map((o, k) => `<button class="opt ${picked !== null ? (o.ok ? "right" : k === picked ? "wrong" : "dim") : ""}" data-k="${k}" ${picked !== null ? "disabled" : ""}>${esc(o.t)}</button>`).join("")}</div>${picked !== null ? `<p class="fb ${it.sh[picked].ok ? "ok" : "no"}"><b>${it.sh[picked].ok ? "Goed." : "Niet goed."}</b> ${esc(it.uitleg || "")}</p><div class="row"><button class="btn primary" data-next>${i === order.length - 1 ? "Bekijk score" : "Volgende"}</button></div>` : ""}</div>`;
+    box.querySelectorAll(".opt").forEach(b => b.onclick = () => { picked = +b.dataset.k; if (it.sh[picked].ok) score++; draw(); });
+    const nx = box.querySelector("[data-next]"); if (nx){ nx.onclick = () => { i++; picked = null; draw(); }; nx.focus(); }
+  }
+  draw();
+}
+
+/* snelle check met Claude */
+let qcCtl = null;
+$("#qcGo").onclick = async () => {
+  if (!sample || qcCtl) return; const v = vakById($("#qcVak").value); const topic = $("#qcTopic").value.trim(); const box = $("#qcBox");
+  if (!topic){ box.innerHTML = `<p class="empty">Vul eerst een onderwerp in.</p>`; $("#qcTopic").focus(); return; }
+  box.innerHTML = `<p class="empty">Claude maakt vragen over ${esc(topic)}…</p>`; qcCtl = new AbortController(); $("#qcGo").disabled = true;
+  try {
+    const r = await sample.json(`Maak 5 meerkeuzevragen voor ${v?.name || "het vak"} op 6-vwo-eindexamenniveau (Nederland) over: ${topic}. Vragen en uitleg in het Nederlands${v?.id === "eng" ? " (Engelse voorbeeldzinnen mogen)" : ""}. Elke vraag 4 opties, precies één goed, plausibele afleiders gebaseerd op veelgemaakte fouten. Antwoord met alleen een JSON-array: [{"q":"vraag","opts":["A","B","C","D"],"a":0,"uitleg":"waarom dit het juiste antwoord is, 1-2 zinnen"}]`, { signal: qcCtl.signal });
+    const items = (Array.isArray(r) ? r : []).filter(x => x && typeof x.q === "string" && Array.isArray(x.opts) && x.opts.length >= 2 && Number.isInteger(x.a) && x.a >= 0 && x.a < x.opts.length).map(x => ({ q: x.q, opts: x.opts.map(String), a: x.a, uitleg: String(x.uitleg || "") }));
+    if (!items.length) throw { code: "invalid_json" };
+    quiz(box, items, `${v?.name || ""} · ${topic}`, (s, n) => addLog(v?.id || "", `Claude-check ${topic}: ${s}/${n}`));
+  } catch (e) { const m = sampleErrCopy(e); box.innerHTML = m ? `<div class="notice bad">${esc(m)}</div>` : ""; }
+  qcCtl = null; $("#qcGo").disabled = !sample;
+};
+
+/* ================= ENGELS ================= */
+const ENG_TYPES = [
+  { t: "Hoofdgedachte of bedoeling", vb: "Welke uitspraak geeft de hoofdgedachte van de tekst het best weer?", aanpak: "Lees titel, intro en slotalinea eerst. Kies het antwoord dat de hele tekst dekt, en let op de slotalinea: daar staat vaak de conclusie.", trap: "Een antwoord dat klopt, maar maar over één alinea gaat." },
+  { t: "Functie van een alinea of zin", vb: "Wat is de functie van alinea 4 ten opzichte van alinea 3?", aanpak: "Vraag je af wat de alinea doet met de vorige: een voorbeeld geven, een tegenargument weerleggen, een oorzaak noemen, iets nuanceren. Kijk naar het eerste signaalwoord.", trap: "De inhoud samenvatten in plaats van de functie te benoemen." },
+  { t: "Gatentekst", vb: "Welk woord of welke woordgroep past in het gat in alinea 2?", aanpak: "Lees de zin ervoor en erna. Bepaal zelf eerst het verband (tegenstelling, gevolg, voorbeeld) voordat je naar de opties kijkt.", trap: "Een optie kiezen die goed klinkt, maar het verkeerde verband geeft." },
+  { t: "Verband en signaalwoorden", vb: "Welk verband bestaat er tussen de eerste en de tweede zin van alinea 3?", aanpak: "Zoek het signaalwoord (however, therefore, admittedly). Staat er geen, vul er dan zelf een in en kijk welke het beste past.", trap: "Toegeving (admittedly, granted) verwarren met gewone tegenstelling." },
+  { t: "Toon en houding van de schrijver", vb: "Welke houding heeft de schrijver tegenover …?", aanpak: "Let op beoordelende woorden (foolish, remarkably, sadly) en op ironie. Kies de nuance: vaak is het ‘voorzichtig positief’ en niet ‘enthousiast’.", trap: "De mening van iemand die de schrijver citeert aanzien voor die van de schrijver." },
+  { t: "Citeervraag", vb: "Citeer de eerste twee woorden van de zin waarin …", aanpak: "Zoek de zin, controleer dat hij echt antwoordt op de vraag en citeer precies wat gevraagd wordt: niet meer en niet minder.", trap: "Een woord te veel of te weinig. Dan krijg je 0 punten." },
+  { t: "Wel/niet-reeks", vb: "Geef van elke bewering aan of deze wel of niet in de tekst staat.", aanpak: "Zoek per bewering de plek in de tekst op. Alleen ‘wel’ als het er echt staat, niet als het je logisch lijkt.", trap: "Een bewering die bijna klopt maar één woord te sterk is (always, all, most)." },
+  { t: "Open vraag in het Nederlands", vb: "Leg uit wat de schrijver bedoelt met … Antwoord in het Nederlands.", aanpak: "Het aantal punten is meestal het aantal elementen dat je moet noemen. Antwoord kort, in eigen woorden en in het Nederlands.", trap: "Engels overschrijven of een hele zin vertalen in plaats van de kern te noemen." },
+  { t: "Woordbetekenis uit context", vb: "Wat betekent ‘…’ in alinea 2?", aanpak: "Vervang het woord door elke optie en lees de zin opnieuw. De context weegt zwaarder dan wat je denkt dat het woord betekent.", trap: "De meest gangbare betekenis kiezen terwijl de tekst een andere bedoelt." }
+];
+const SIG = [
+  ["however","echter","tegenstelling"],["whereas","terwijl (daarentegen)","tegenstelling"],["on the contrary","integendeel","tegenstelling"],["nevertheless","toch, desondanks","tegenstelling"],["yet","maar, toch","tegenstelling"],["conversely","omgekeerd","tegenstelling"],["instead","in plaats daarvan","tegenstelling"],
+  ["although","hoewel","toegeving"],["admittedly","toegegeven","toegeving"],["granted","toegegeven","toegeving"],["even though","ook al","toegeving"],["while it is true that","hoewel het waar is dat","toegeving"],
+  ["because of","vanwege","oorzaak"],["owing to","te danken aan, door","oorzaak"],["due to","door, als gevolg van","oorzaak"],["on account of","wegens","oorzaak"],
+  ["therefore","daarom","gevolg"],["consequently","bijgevolg","gevolg"],["as a result","als gevolg daarvan","gevolg"],["hence","vandaar, daarom","gevolg"],
+  ["for instance","bijvoorbeeld","voorbeeld"],["such as","zoals","voorbeeld"],["to illustrate","ter illustratie","voorbeeld"],
+  ["moreover","bovendien","opsomming"],["furthermore","verder, bovendien","opsomming"],["in addition","daarnaast","opsomming"],["what is more","wat meer is, bovendien","opsomming"],
+  ["in short","kortom","conclusie"],["all in all","al met al","conclusie"],["to sum up","samengevat","conclusie"],
+  ["provided that","op voorwaarde dat","voorwaarde"],["unless","tenzij","voorwaarde"],["as long as","zolang","voorwaarde"],
+  ["similarly","op dezelfde manier","vergelijking"],["likewise","evenzo","vergelijking"],
+  ["in order to","om te","doel"],["so as to","om te","doel"],
+  ["in other words","met andere woorden","toelichting"],["that is to say","dat wil zeggen","toelichting"]
+];
+const SIG_CATS = [...new Set(SIG.map(s => s[2]))];
+const TOON = [
+  ["sarcastic","bijtend spottend, gemeen bedoeld"],["ironic","het tegenovergestelde zeggen van wat je bedoelt"],["sceptical","twijfelend, niet overtuigd"],["indignant","verontwaardigd"],["condescending","neerbuigend"],["ambivalent","met gemengde gevoelens"],["nostalgic","weemoedig terugverlangend naar vroeger"],["appreciative","waarderend"],["dismissive","afwijzend, iets wegwuivend"],["cautious","voorzichtig"],["resigned","berustend, zich erbij neerleggend"],["mocking","spottend"],["wry","droog-ironisch"],["scathing","vernietigend kritisch"],["detached","afstandelijk, zonder betrokkenheid"],["earnest","oprecht en serieus"],["reproachful","verwijtend"],["alarmist","onnodig paniekerig, bangmakerij"],["matter-of-fact","zakelijk, nuchter"],["complacent","zelfgenoegzaam, te tevreden"],["self-deprecating","zichzelf relativerend of omlaag halend"],["bewildered","verbijsterd"],["reluctant","met tegenzin"],["candid","openhartig"],["pessimistic","somber over de toekomst"],["cautiously optimistic","voorzichtig positief"]
+];
+const ENG_TEXTS = [
+  { id: "busy", titel: "Why we should stop praising busy people", alineas: [
+    "There was a time when “How are you?” was answered with “Fine, thanks.” Today the standard reply is “Busy!”, delivered with a sigh that is half complaint and half boast. Being overloaded has become a badge of honour, a way of telling the world that we matter.",
+    "Sociologists have a name for this: conspicuous busyness. A century ago, the wealthy showed off their status through leisure: long holidays, afternoons at the club. Now that the most valued workers are those whose skills are in demand, a full calendar signals scarcity, and scarcity signals worth.",
+    "____, the habit is not harmless. Research on decision-making suggests that people who feel chronically short of time make poorer choices: they focus on the most urgent task rather than the most important one, a phenomenon psychologists call “tunnelling”. The busy manager answers forty emails and never gets round to the strategy that would have made half of them unnecessary.",
+    "Admittedly, some people genuinely have too much to do. Nurses working double shifts or parents juggling two jobs are not boasting when they say they are busy. But they are rarely the ones who say it most proudly. The loudest complaints tend to come from those who have, at least to some degree, chosen their overload.",
+    "What would happen if we stopped rewarding busyness with admiration? Schools and employers could start by praising results rather than hours. A student who finishes an assignment efficiently and then goes for a walk has not been lazy; she has managed her time well. Perhaps the most radical answer to “How are you?” is simply: “I have time.”"
+  ], vragen: [
+    { type: "mc", q: "Wat is de functie van alinea 2 ten opzichte van alinea 1?", opts: ["Alinea 2 geeft een verklaring voor het verschijnsel uit alinea 1.", "Alinea 2 weerlegt de bewering uit alinea 1.", "Alinea 2 noemt de gevolgen van het verschijnsel uit alinea 1.", "Alinea 2 geeft een oplossing voor het probleem uit alinea 1."], a: 0, uitleg: "Alinea 1 beschrijft dat ‘druk zijn’ een statussymbool is; alinea 2 legt uit waarom (een volle agenda laat zien dat je schaars en dus waardevol bent)." },
+    { type: "mc", q: "Welk woord past in het gat aan het begin van alinea 3?", opts: ["However", "Therefore", "For example", "In short"], a: 0, uitleg: "Alinea 2 maakt druk zijn begrijpelijk; alinea 3 zegt dat het tóch niet onschuldig is. Dat is een tegenstelling: However." },
+    { type: "open", q: "Wat bedoelen psychologen met ‘tunnelling’ (alinea 3)? Antwoord in het Nederlands.", model: ["Mensen die structureel tijd tekortkomen, richten zich op wat het dringendst is in plaats van op wat het belangrijkst is."], uitleg: "Het gaat om het verschil tussen urgent en belangrijk; alleen ‘slechtere keuzes maken’ is te algemeen." },
+    { type: "mc", q: "Welke functie heeft ‘Admittedly’ aan het begin van alinea 4?", opts: ["Het leidt een toegeving in: de schrijver erkent dat sommige mensen het echt druk hebben.", "Het leidt een conclusie in van de hele tekst.", "Het leidt een voorbeeld in bij alinea 3.", "Het leidt een oorzaak in van het probleem uit alinea 3."], a: 0, uitleg: "Admittedly = toegegeven. De schrijver geeft een tegenwerping toe en zwakt die met ‘But…’ meteen weer af." },
+    { type: "wn", q: "Geef van elke bewering aan of deze wel of niet in de tekst staat.", stmts: [["Vroeger lieten rijke mensen hun status zien door veel vrije tijd te hebben.", true], ["Verpleegkundigen klagen het hardst over drukte.", false], ["De schrijver vindt dat scholen resultaten moeten belonen in plaats van gewerkte uren.", true], ["Mensen met tijdgebrek beantwoorden minder e-mails.", false]], uitleg: "Alinea 2 noemt de rijken; alinea 4 zegt juist dat verpleegkundigen er níet trots over klagen; alinea 5 noemt resultaten boven uren; de manager in alinea 3 beantwoordt juist veertig mails." },
+    { type: "mc", q: "Welke uitspraak geeft de hoofdgedachte van de tekst het best weer?", opts: ["Druk zijn is een statussymbool geworden met nadelige gevolgen; we zouden het niet langer moeten bewonderen.", "Rijke mensen werken tegenwoordig harder dan arme mensen.", "Mensen die zeggen dat ze het druk hebben, liegen daar meestal over.", "Scholen geven leerlingen te veel opdrachten."], a: 0, uitleg: "Alleen A dekt de hele tekst: het verschijnsel (1-2), de nadelen (3-4) en de oproep (5)." }
+  ]},
+  { id: "ai", titel: "Robots in the classroom? Not so fast", alineas: [
+    "Every few years, a new technology is announced that will “revolutionise” education. In the 1920s it was radio; in the 1960s, television; in the 2000s, the interactive whiteboard. Today it is artificial intelligence, and the predictions are, if anything, bolder than ever: personal AI tutors for every child, lessons adapted second by second to each learner’s needs.",
+    "The track record of such predictions is not encouraging. Most classrooms today look remarkably like those of fifty years ago, and studies of expensive technology programmes often find little lasting effect on what pupils actually learn. Whiteboards, in many schools, ended up as very expensive projector screens.",
+    "This is not because teachers are stubborn. Learning is a social activity as much as an intellectual one. Pupils work hard for teachers they respect, and they persist with difficult material because someone notices whether they do. A tutor that never gets disappointed is, in an odd way, easy to ignore.",
+    "That said, it would be foolish to dismiss AI altogether. Unlike a whiteboard, a chatbot can answer questions, explain a concept in five different ways and give instant feedback on an essay at midnight. For pupils whose parents cannot afford private tuition, that could be a genuine equaliser.",
+    "The real question, then, is not whether AI will replace teachers, but what teachers will do with it. If it frees them from correcting spelling mistakes so that they can spend more time talking to pupils, it may turn out to be the first educational technology that lives up to at least some of its hype."
+  ], vragen: [
+    { type: "mc", q: "Hoe verhoudt alinea 2 zich tot alinea 1?", opts: ["Alinea 2 relativeert de verwachtingen uit alinea 1.", "Alinea 2 geeft een voorbeeld bij alinea 1.", "Alinea 2 noemt een oorzaak van wat in alinea 1 staat.", "Alinea 2 trekt een conclusie uit alinea 1."], a: 0, uitleg: "Alinea 1 noemt grote beloftes; alinea 2 laat zien dat zulke beloftes vroeger weinig opleverden. Dat is relativeren." },
+    { type: "open", q: "Welke twee redenen geeft de schrijver in alinea 3 waarom leerlingen leren van een docent? Antwoord in het Nederlands.", model: ["Leerlingen werken hard voor docenten die ze respecteren.", "Leerlingen zetten door omdat iemand merkt of ze dat doen."], uitleg: "Twee punten, dus twee elementen. ‘Leren is sociaal’ alleen is de overkoepelende stelling, geen reden." },
+    { type: "mc", q: "‘A tutor that never gets disappointed is, in an odd way, easy to ignore.’ (alinea 3) Wat bedoelt de schrijver?", opts: ["Omdat een AI-tutor nooit teleurgesteld raakt, voelen leerlingen minder druk om hun best te doen.", "AI-tutors maken zoveel fouten dat leerlingen ze niet serieus nemen.", "Leerlingen negeren docenten die snel teleurgesteld zijn.", "AI-tutors zijn moeilijk te bedienen."], a: 0, uitleg: "De sociale druk (‘iemand merkt het’) ontbreekt bij een machine." },
+    { type: "cite", q: "Citeer de eerste twee woorden van de zin in alinea 4 waarin de schrijver een voordeel noemt voor leerlingen uit gezinnen met weinig geld.", a: "For pupils", uitleg: "‘For pupils whose parents cannot afford private tuition…’" },
+    { type: "mc", q: "Welke houding heeft de schrijver tegenover AI in het onderwijs?", opts: ["Voorzichtig positief", "Onvoorwaardelijk enthousiast", "Vijandig", "Onverschillig"], a: 0, uitleg: "Hij waarschuwt voor hype (2-3) maar ziet echte kansen (4-5): ‘at least some of its hype’." }
+  ]},
+  { id: "train", titel: "The return of the night train", alineas: [
+    "For decades, Europe’s night trains seemed doomed. Cheap flights could take you from Amsterdam to Vienna in under two hours, and one sleeper service after another was quietly withdrawn. By 2016, even the German national railway had abandoned its overnight routes, calling them a loss-making relic.",
+    "Yet only a few years later, the night train is back. Austrian railways bought up much of the German rolling stock and now run dozens of routes, while new private operators have launched services between cities such as Brussels, Berlin and Prague. Tickets on popular routes sell out weeks in advance.",
+    "The most obvious explanation is climate change. A night train produces only a fraction of the emissions of a short-haul flight, and a growing number of travellers, particularly younger ones, feel uneasy about flying. In Sweden, the word “flygskam” (flight shame) even entered everyday language.",
+    "But guilt alone does not fill trains. Many passengers say they are attracted by something airports cannot offer: you board in the city centre in the evening, sleep, and wake up in another country without having lost a working day. For them, the train is not a sacrifice but a small luxury.",
+    "Whether the revival will last is another matter. Sleeper carriages are expensive to build, track access charges are high, and a single cancelled train can strand hundreds of passengers far from home. Unless governments are prepared to treat night trains as part of their climate policy rather than as a commercial niche, the comeback may prove as fragile as the old network was."
+  ], vragen: [
+    { type: "mc", q: "Welk verband geeft ‘Yet’ aan het begin van alinea 2 aan met alinea 1?", opts: ["Tegenstelling", "Gevolg", "Voorbeeld", "Opsomming"], a: 0, uitleg: "Alinea 1: de nachttrein leek ten dode opgeschreven. Alinea 2: toch is hij terug." },
+    { type: "open", q: "Wat betekent ‘flygskam’ volgens alinea 3? Antwoord in het Nederlands.", model: ["Je schamen of schuldig voelen over vliegen (vanwege de schade voor het klimaat)."], uitleg: "De tekst vertaalt het zelf: flight shame." },
+    { type: "mc", q: "Welke uitspraak past het best bij alinea 4?", opts: ["Voor veel reizigers is de nachttrein aantrekkelijk om het gemak, niet alleen om het klimaat.", "Reizigers voelen zich vooral schuldig als ze met de trein gaan.", "Nachttreinen zijn goedkoper dan vliegtuigen.", "Nachttreinen vertrekken vanaf vliegvelden."], a: 0, uitleg: "‘Guilt alone does not fill trains’: er is ook een praktisch voordeel. Over de prijs staat niets." },
+    { type: "wn", q: "Geef van elke bewering aan of deze wel of niet in de tekst staat.", stmts: [["De Duitse spoorwegen stopten in 2016 met hun nachttreinen.", true], ["De Oostenrijkse spoorwegen kochten veel Duitse treinen over.", true], ["Een nachttrein stoot meer uit dan een korte vlucht.", false], ["Volgens de schrijver is de terugkeer van de nachttrein blijvend.", false]], uitleg: "1 en 2 staan in alinea 1 en 2. Een nachttrein stoot juist veel minder uit (3). De schrijver twijfelt of het blijft (5)." },
+    { type: "open", q: "Noem twee problemen die volgens alinea 5 de toekomst van de nachttrein bedreigen. Antwoord in het Nederlands.", model: ["Slaaprijtuigen zijn duur om te bouwen / er zijn hoge kosten voor het gebruik van het spoor.", "Eén uitgevallen trein kan honderden reizigers laten stranden."], uitleg: "Elk van de drie genoemde problemen telt; twee is genoeg voor de punten." }
+  ]}
+];
+let engSub = "types";
+function openEng(){ setTab("trainers"); $("#trainerHome").hidden = true; $("#engApp").hidden = false; renderEng(); window.scrollTo({ top: 0 }); }
+function closeEng(){ $("#engApp").hidden = true; $("#trainerHome").hidden = false; }
+function renderEng(){
+  const app = $("#engApp"); const subs = [["types","Vraagtypen"],["sig","Signaalwoorden"],["toon","Toonwoorden"],["tekst","Oefenteksten"],["schrijf","Schrijfcheck"]];
+  app.innerHTML = `<div class="row"><button class="btn sm ghost" id="engBack">‹ Alle trainers</button><span class="vk v-eng">${sessionsThisWeek("eng")}/${vakById("eng")?.goal ?? 0} sessies deze week</span></div>
+  <div><h2 style="font-size:1.8rem;margin:0">Engels <span class="mark">leesvaardigheid</span></h2><p class="muted" style="margin:4px 0 0">CE vwo: 150 minuten, alleen leesvaardigheid, vragen in het Nederlands. Je mag een woordenboek gebruiken, maar zoek alleen op wat je voor de vraag nodig hebt.</p></div>
+  <div class="subnav">${subs.map(([k, n]) => `<button class="chip" data-es="${k}" aria-pressed="${engSub === k}">${n}</button>`).join("")}</div><div id="engBody" class="sec"></div>`;
+  $("#engBack").onclick = closeEng;
+  app.querySelector(".subnav").onclick = e => { const b = e.target.closest("[data-es]"); if (!b) return; engSub = b.dataset.es; renderEng(); };
+  const body = $("#engBody");
+  if (engSub === "types"){
+    body.innerHTML = `<div class="types">${ENG_TYPES.map(t => `<div class="card type"><h3>${esc(t.t)}</h3><dl><dt>Zo ziet de vraag eruit</dt><dd><i>${esc(t.vb)}</i></dd><dt>Aanpak</dt><dd>${esc(t.aanpak)}</dd><dt>Valkuil</dt><dd class="trap">${esc(t.trap)}</dd></dl></div>`).join("")}</div>`;
+  } else if (engSub === "sig"){
+    body.innerHTML = `<p class="muted" style="margin:0">Welk verband geeft het signaalwoord aan? Twaalf per ronde, steeds een andere selectie.</p><div class="card" id="sigBox"></div>`;
+    const items = shuffle(SIG).slice(0, 12).map(([w, nl, cat]) => ({ q: `“${w}” geeft welk verband aan?`, opts: [cat, ...shuffle(SIG_CATS.filter(c => c !== cat)).slice(0, 3)], a: 0, uitleg: `${w} = ${nl} → ${cat}.` }));
+    quiz($("#sigBox"), items, "Signaalwoorden", (s, n) => addLog("eng", `Signaalwoorden ${s}/${n}`));
+  } else if (engSub === "toon"){
+    body.innerHTML = `<p class="muted" style="margin:0">Woorden waarmee CE-vragen de toon of houding van de schrijver beschrijven. Tien per ronde.</p><div class="card" id="toonBox"></div>`;
+    const items = shuffle(TOON).slice(0, 10).map(([w, nl]) => ({ q: `Wat betekent “${w}” als toon of houding?`, opts: [nl, ...shuffle(TOON.filter(t => t[0] !== w)).slice(0, 3).map(t => t[1])], a: 0, uitleg: `${w}: ${nl}.` }));
+    quiz($("#toonBox"), items, "Toonwoorden", (s, n) => addLog("eng", `Toonwoorden ${s}/${n}`));
+  } else if (engSub === "tekst"){
+    const gen = lsGet("sp-eng-gen", []);
+    const all = [...ENG_TEXTS, ...gen];
+    body.innerHTML = `<div class="grid2">${all.map((t, i) => `<div class="card"><span class="qmeta">${i < ENG_TEXTS.length ? "Oefentekst" : "Gemaakt door Claude"} · ${t.vragen.length} vragen · ${t.vragen.reduce((s, q) => s + qPts(q), 0)} punten</span><h3 style="font:800 1.15rem var(--f-display);margin:6px 0 10px">${esc(t.titel)}</h3><button class="btn primary" data-tx="${i}">Maak deze tekst</button></div>`).join("")}</div>
+      <div class="card"><h3>Nieuwe tekst laten maken</h3><p class="small muted" style="margin:0 0 10px">Claude schrijft een tekst op CE-niveau met vragen en antwoordmodel. Duurt ongeveer een halve minuut.</p><div class="row"><input type="text" id="genTopic" placeholder="Onderwerp, bijv. fast fashion" style="flex:1;min-width:160px"><button class="btn primary" id="genGo" ${sample ? "" : "disabled"}>Maak tekst</button></div><div id="genMsg" class="small muted" style="margin-top:6px">${sample ? "" : "Claude is niet beschikbaar in deze weergave."}</div></div>`;
+    body.querySelectorAll("[data-tx]").forEach(b => b.onclick = () => runText(body, all[+b.dataset.tx]));
+    $("#genGo").onclick = () => genText(body);
+  } else if (engSub === "schrijf"){
+    body.innerHTML = `<div class="card"><h3>Schrijfcheck (SE schrijfvaardigheid)</h3><p class="small muted" style="margin:0 0 10px">Plak je tekst. Claude geeft feedback op inhoud, opbouw, register, woordenschat en grammatica, met een geschat ERK-niveau en de drie belangrijkste verbeterpunten.</p><div class="row" style="margin-bottom:8px"><select id="wrType"><option>Opinion essay</option><option>Formal letter / email</option><option>Article</option><option>Review</option><option>Argumentative essay</option></select><input type="text" id="wrTask" placeholder="De opdracht (optioneel)" style="flex:1;min-width:160px"></div><textarea id="wrText" rows="10" placeholder="Plak hier je Engelse tekst…"></textarea><div class="row" style="margin-top:8px"><button class="btn primary" id="wrGo" ${sample ? "" : "disabled"}>Geef feedback</button><button class="btn ghost" id="wrStop" hidden>Stop</button><span class="small muted" id="wrCount"></span></div><div id="wrOut" style="margin-top:12px"></div></div>`;
+    const draft = lsGet("sp-eng-draft", ""); $("#wrText").value = draft;
+    const cnt = () => { $("#wrCount").textContent = ($("#wrText").value.trim().split(/\s+/).filter(Boolean).length) + " woorden"; };
+    cnt(); $("#wrText").oninput = () => { cnt(); lsSet("sp-eng-draft", $("#wrText").value); };
+    let ctl = null; $("#wrStop").onclick = () => ctl?.abort();
+    $("#wrGo").onclick = async () => {
+      const txt = $("#wrText").value.trim(); if (!txt || !sample || ctl) return;
+      const out = $("#wrOut"); out.innerHTML = `<div class="out">Claude leest je tekst…</div>`; const o = out.firstChild;
+      ctl = new AbortController(); $("#wrGo").disabled = true; $("#wrStop").hidden = false;
+      try { await sample(`Je bent docent Engels in 6 vwo (Nederland). Geef feedback in het Nederlands op deze leerlingtekst (${$("#wrType").value}${$("#wrTask").value.trim() ? ", opdracht: " + $("#wrTask").value.trim() : ""}). Structuur: 1) Geschat ERK-niveau (B2/C1) met één zin waarom. 2) Inhoud en opbouw. 3) Register en toon. 4) Woordenschat. 5) Grammatica en spelling: noem concrete fouten met verbetering (citeer kort). 6) De drie belangrijkste verbeterpunten. Wees eerlijk en concreet, schrijf de tekst niet voor hem uit.\n\nTekst:\n${txt.slice(0, 12000)}`, { signal: ctl.signal, onText: ({ text }) => { o.textContent = text; } }); addLog("eng", "Schrijfcheck " + $("#wrType").value); }
+      catch (e) { o.textContent = (e.text ? e.text + "\n\n" : "") + (sampleErrCopy(e) || "Gestopt."); }
+      ctl = null; $("#wrGo").disabled = !sample; $("#wrStop").hidden = true;
+    };
+  }
+}
+const qPts = q => q.type === "wn" ? 2 : q.type === "open" ? Math.max(1, (q.model || []).length) : 1;
+const normCite = s => String(s).toLowerCase().replace(/[“”"'‘’.,;:!?()]/g, "").replace(/\s+/g, " ").trim();
+function runText(body, T){
+  const st = T.vragen.map(() => ({ ans: null, checked: false, pts: 0, open: "", ticks: [] }));
+  let logged = false;
+  body.innerHTML = `<div class="row"><button class="btn sm ghost" id="txBack">‹ Alle teksten</button></div><div class="extext"><h3>${esc(T.titel)}</h3>${T.alineas.map((p, i) => `<p><span class="pn">${i + 1}</span>${esc(p)}</p>`).join("")}</div><div class="card"><div class="qlist" id="qlist"></div><div class="row" style="margin-top:16px;justify-content:space-between"><span class="res" id="txScore"></span><button class="btn hl" id="txSave" disabled>Opslaan als sessie</button></div></div>`;
+  $("#txBack").onclick = () => { engSub = "tekst"; renderEng(); };
+  const ql = $("#qlist");
+  function draw(){
+    ql.innerHTML = T.vragen.map((q, i) => {
+      const s = st[i], p = qPts(q); let inner = "";
+      if (q.type === "mc") inner = `<div class="opts">${q.opts.map((o, k) => `<button class="opt ${s.checked ? (k === q.a ? "right" : k === s.ans ? "wrong" : "dim") : ""}" data-q="${i}" data-k="${k}" ${s.checked ? "disabled" : ""}>${String.fromCharCode(65 + k)}. ${esc(o)}</button>`).join("")}</div>`;
+      else if (q.type === "wn") inner = `<div class="wn">${q.stmts.map((x, k) => `<span>${k + 1}. ${esc(x[0])}</span><select data-q="${i}" data-wn="${k}" ${s.checked ? "disabled" : ""} aria-label="Bewering ${k + 1}"><option value="">kies</option><option value="1" ${s.ans?.[k] === true ? "selected" : ""}>wel</option><option value="0" ${s.ans?.[k] === false ? "selected" : ""}>niet</option></select>${s.checked ? `<span class="res ${s.ans[k] === x[1] ? "ok" : "no"}" style="grid-column:1/-1;margin-top:-4px">${s.ans[k] === x[1] ? "goed" : "fout, het is " + (x[1] ? "wel" : "niet")}</span>` : ""}`).join("")}</div>${s.checked ? "" : `<div class="row"><button class="btn sm primary" data-chk="${i}">Controleer</button></div>`}`;
+      else if (q.type === "cite") inner = `<div class="row"><input type="text" data-q="${i}" data-cite value="${esc(s.open)}" ${s.checked ? "disabled" : ""} placeholder="Citaat" style="flex:1;min-width:160px">${s.checked ? "" : `<button class="btn sm primary" data-chk="${i}">Controleer</button>`}</div>${s.checked ? `<p class="fb ${s.pts ? "ok" : "no"}"><b>${s.pts ? "Goed." : "Niet goed."}</b> Antwoord: “${esc(q.a)}”. ${esc(q.uitleg || "")}</p>` : ""}`;
+      else if (q.type === "open") inner = `<textarea rows="3" data-q="${i}" data-open ${s.checked ? "disabled" : ""} placeholder="Je antwoord in het Nederlands">${esc(s.open)}</textarea>${s.checked ? `<div class="fb ok" style="background:var(--sunk);border-color:var(--line)"><b>Antwoordmodel</b>. Vink aan wat je goed had:<ul class="model" style="margin-top:6px">${q.model.map((m, k) => `<li><label><input type="checkbox" data-q="${i}" data-tick="${k}" ${s.ticks[k] ? "checked" : ""}> ${esc(m)}</label></li>`).join("")}</ul>${q.uitleg ? `<p class="small muted" style="margin:6px 0 0">${esc(q.uitleg)}</p>` : ""}</div><div class="row">${sample ? `<button class="btn sm" data-rev="${i}">Laat Claude nakijken</button>` : ""}</div><div class="out" data-revout="${i}" hidden></div>` : `<div class="row"><button class="btn sm primary" data-chk="${i}">Toon antwoordmodel</button></div>`}`;
+      const fbMc = q.type === "mc" && s.checked ? `<p class="fb ${s.pts ? "ok" : "no"}"><b>${s.pts ? "Goed." : "Niet goed."}</b> ${esc(q.uitleg || "")}</p>` : "";
+      const fbWn = q.type === "wn" && s.checked ? `<p class="fb ${s.pts === 2 ? "ok" : "no"}"><b>${s.pts} van 2 punten.</b> ${esc(q.uitleg || "")}</p>` : "";
+      return `<div class="qitem"><div class="qh">${i + 1}. ${esc(q.q)}<span>${s.checked ? s.pts + "/" : ""}${p}p</span></div>${inner}${fbMc}${fbWn}</div>`;
+    }).join("");
+    const max = T.vragen.reduce((a, q) => a + qPts(q), 0), got = st.reduce((a, s) => a + s.pts, 0), done = st.every(s => s.checked);
+    $("#txScore").textContent = `Score: ${got} / ${max}${done ? " · klaar" : ""}`;
+    $("#txScore").className = "res " + (done ? (got >= max * .7 ? "ok" : got >= max * .5 ? "mid" : "no") : "");
+    $("#txSave").disabled = !done || logged; $("#txSave").textContent = logged ? "Opgeslagen" : "Opslaan als sessie";
+  }
+  ql.addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.k !== undefined){ const i = +b.dataset.q, q = T.vragen[i]; st[i].ans = +b.dataset.k; st[i].checked = true; st[i].pts = st[i].ans === q.a ? 1 : 0; draw(); }
+    else if (b.dataset.chk !== undefined){
+      const i = +b.dataset.chk, q = T.vragen[i], s = st[i];
+      if (q.type === "wn"){ const sel = $$(`select[data-q="${i}"]`, ql); if (sel.some(x => x.value === "")) { b.textContent = "Beantwoord alle beweringen"; return; } s.ans = sel.map(x => x.value === "1"); const wrong = q.stmts.filter((x, k) => s.ans[k] !== x[1]).length; s.pts = Math.max(0, 2 - wrong); }
+      else if (q.type === "cite"){ s.pts = normCite(s.open) === normCite(q.a) ? 1 : 0; }
+      s.checked = true; draw();
+    }
+    else if (b.dataset.rev !== undefined){
+      const i = +b.dataset.rev, q = T.vragen[i], out = ql.querySelector(`[data-revout="${i}"]`); out.hidden = false; out.textContent = "Claude kijkt na…"; b.disabled = true;
+      try { await sample(`Kijk dit antwoord op een CE-vraag Engels (vwo) na volgens het antwoordmodel. Antwoord in het Nederlands in maximaal 4 zinnen: hoeveel van de ${qPts(q)} punten, en waarom.\n\nTekst (fragment):\n${T.alineas.join("\n\n").slice(0, 6000)}\n\nVraag: ${q.q}\nAntwoordmodel: ${q.model.join(" | ")}\nAntwoord leerling: ${st[i].open || "(leeg)"}`, { modelTier: "quick", onText: ({ text }) => { out.textContent = text; } }); }
+      catch (err) { out.textContent = sampleErrCopy(err); }
+      b.disabled = false;
+    }
+  });
+  ql.addEventListener("input", e => { const t = e.target; if (t.dataset.open !== undefined || t.dataset.cite !== undefined) st[+t.dataset.q].open = t.value; });
+  ql.addEventListener("change", e => { const t = e.target; if (t.dataset.tick !== undefined){ const s = st[+t.dataset.q]; s.ticks[+t.dataset.tick] = t.checked; s.pts = s.ticks.filter(Boolean).length; draw(); } });
+  $("#txSave").onclick = () => { if (logged) return; logged = true; const max = T.vragen.reduce((a, q) => a + qPts(q), 0), got = st.reduce((a, s) => a + s.pts, 0); addLog("eng", `Oefentekst “${T.titel}”: ${got}/${max}`); draw(); };
+  draw();
+}
+let genCtl = null;
+async function genText(body){
+  if (!sample || genCtl) return; const topic = $("#genTopic").value.trim() || "a current social debate"; const msg = $("#genMsg");
+  msg.textContent = "Claude schrijft een tekst over " + topic + "…"; $("#genGo").disabled = true; genCtl = new AbortController();
+  try {
+    const r = await sample.json(`Schrijf een oefentekst voor het centraal examen Engels vwo (Nederland), onderwerp: ${topic}. Stijl: een opiniërend artikel uit een Britse of Amerikaanse krant of tijdschrift, niveau B2-C1, 5 alinea's, samen 330-420 woorden, met duidelijke signaalwoorden en een eigen standpunt van de schrijver. Je mag één gat laten in de vorm ____ als je een gatentekstvraag stelt. Daarna 5 of 6 vragen in het Nederlands in CE-stijl, gemengd: functie van een alinea, verband, hoofdgedachte, toon, citeervraag, wel/niet-reeks of open vraag. Antwoord met alleen JSON:
+{"titel":"Engelse titel","alineas":["alinea 1","..."],"vragen":[{"type":"mc","q":"vraag","opts":["A","B","C","D"],"a":0,"uitleg":"waarom"},{"type":"open","q":"vraag (antwoord in het Nederlands)","model":["element per punt"],"uitleg":"..."},{"type":"wn","q":"Geef van elke bewering aan of deze wel of niet in de tekst staat.","stmts":[["bewering",true],["bewering",false],["bewering",true],["bewering",false]],"uitleg":"..."},{"type":"cite","q":"Citeer de eerste twee woorden van de zin waarin ...","a":"exact twee woorden uit de tekst","uitleg":"..."}]}
+Zorg dat elk antwoord eenduidig uit de tekst volgt.`, { signal: genCtl.signal });
+    const T = { id: "g" + uid(), titel: String(r?.titel || topic), alineas: (Array.isArray(r?.alineas) ? r.alineas : []).map(String).filter(Boolean), vragen: (Array.isArray(r?.vragen) ? r.vragen : []).filter(validQ) };
+    if (T.alineas.length < 3 || T.vragen.length < 3) throw { code: "invalid_json" };
+    const gen = [T, ...lsGet("sp-eng-gen", [])].slice(0, 6); lsSet("sp-eng-gen", gen);
+    runText(body, T);
+  } catch (e) { msg.textContent = sampleErrCopy(e); $("#genGo").disabled = !sample; }
+  genCtl = null;
+}
+function validQ(q){
+  if (!q || typeof q.q !== "string") return false;
+  if (q.type === "mc") return Array.isArray(q.opts) && q.opts.length >= 2 && Number.isInteger(q.a) && q.a >= 0 && q.a < q.opts.length;
+  if (q.type === "open") return Array.isArray(q.model) && q.model.length >= 1;
+  if (q.type === "wn") return Array.isArray(q.stmts) && q.stmts.length >= 2 && q.stmts.every(s => Array.isArray(s) && typeof s[1] === "boolean");
+  if (q.type === "cite") return typeof q.a === "string" && q.a.trim().length > 0;
+  return false;
+}
+
+/* ================= tabs en render ================= */
+let tab = lsGet("sp-tab", "vandaag");
+function setTab(t){
+  if (!["vandaag", "agenda", "taken", "trainers"].includes(t)) t = "vandaag";
+  tab = t; lsSet("sp-tab", t);
+  $$("nav.tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  ["vandaag", "agenda", "taken", "trainers"].forEach(k => { $("#p-" + k).hidden = k !== t; });
+  if (t === "taken") renderSettings();
+  renderAll();
+}
+$("nav.tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b){ setTab(b.dataset.tab); if (b.dataset.tab === "trainers") closeEng(); } });
+function renderAll(){
+  const d = dayDiff(new Date(), parseYmd(S.settings.ceDate));
+  $("#ceDays").textContent = d >= 0 ? d : "0"; $("#ceLabel").textContent = d >= 0 ? (d === 1 ? "dag tot het eerste CE" : "dagen tot het eerste CE") : "het CE is begonnen";
+  fillVakSelects();
+  renderVandaag(); renderTaken();
+  if (tab === "trainers" && $("#engApp").hidden) renderTrainers();
+  if (tab === "agenda") renderAgenda();
+}
+renderSettings();
+setTab(tab);
+if (location.hash === "#engels") openEng();
+else if (["#agenda", "#taken", "#trainers", "#vandaag"].includes(location.hash)) setTab(location.hash.slice(1));
+</script>
